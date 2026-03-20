@@ -1,0 +1,10 @@
+name = "echoleads-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-18"
+
+[triggers]
+crons = ["*/30 * * * *"] # Every 30 minutes
+
+[vars]
+SUPABASE_URL = "https://nfquauruszzihrpqkbpb.supabase.co"
+# GROQ_API_KEY and SUPABASE_SERVICE_ROLE_KEY are set via wrangler secrets

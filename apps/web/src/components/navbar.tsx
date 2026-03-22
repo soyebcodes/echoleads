@@ -47,7 +47,7 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-8">
           {navLinks.map((link) => (
             <Link
               key={link.name}
@@ -61,7 +61,7 @@ export function Navbar() {
 
         {/* Action Button & Mobile Toggle */}
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="hidden md:block">
+          <Link href="/dashboard" className="hidden lg:block">
             <Button className="bg-white text-black hover:bg-slate-200 transition-colors rounded-full px-6 font-semibold">
               Go to Dashboard
             </Button>
@@ -69,7 +69,7 @@ export function Navbar() {
           
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-slate-300 hover:text-white p-2"
+            className="lg:hidden text-slate-300 hover:text-white p-2"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -83,7 +83,7 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-slate-950/95 backdrop-blur-xl border-b border-white/5 overflow-hidden"
+            className="lg:hidden bg-slate-950/95 backdrop-blur-xl border-b border-white/5 overflow-hidden"
           >
             <div className="px-6 py-6 flex flex-col gap-4">
               {navLinks.map((link) => (

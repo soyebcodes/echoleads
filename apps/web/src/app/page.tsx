@@ -1,6 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/navbar";
+import { HowItWorks } from "@/components/landing/how-it-works";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
@@ -86,6 +87,8 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </main>
+
+      <HowItWorks />
     </div>
   );
 }

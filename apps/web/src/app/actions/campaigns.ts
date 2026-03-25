@@ -61,8 +61,9 @@ export async function createCampaign(data: any) {
 export async function getCampaigns() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { eq } = await import("drizzle-orm");
 
   if (!user) return [];
 
-  return await db.select().from(campaigns).where({ userId: user.id });
+  return await db.select().from(campaigns).where(eq(campaigns.userId, user.id));
 }

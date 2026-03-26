@@ -67,3 +67,24 @@ export async function getCampaigns() {
 
   return await db.select().from(campaigns).where(eq(campaigns.userId, user.id));
 }
+
+export async function getCampaignById(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { eq, and } = await import("drizzle-orm");
+
+  if (!user) return null;
+
+  const [campaign] = await db.select().from(campaigns).where(and(eq(campaigns.id, id), eq(campaigns.userId, user.id)));
+  
+  if (!campaign) return null;
+
+  const campaignKeywords = await db.select().from(keywords).where(eq(keywords.campaignId, id));
+  const campaignVoiceSamples = await db.select().from(voiceSamples).where(eq(voiceSamples.campaignId, id));
+
+  return {
+    ...campaign,
+    keywords: campaignKeywords,
+    voiceSamples: campaignVoiceSamples,
+  };
+}

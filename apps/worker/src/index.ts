@@ -43,7 +43,12 @@ async function processLeads(env: Bindings) {
       ? positiveKeywords.map((kw: string) => `"${kw}"`).join(" OR ")
       : "saas";
 
-    const rssUrl = `https://www.reddit.com/search.rss?q=${encodeURIComponent(searchQuery)}&sort=new`;
+    // Map timeFilterDays to Reddit's `t` param: day, week, month, year, all
+    const timeFilterDays: number = campaign.time_filter_days ?? 7;
+    const redditTimePeriod = timeFilterDays <= 1 ? "day" : timeFilterDays <= 7 ? "week" : timeFilterDays <= 31 ? "month" : timeFilterDays <= 365 ? "year" : "all";
+    const cutoffDate = new Date(Date.now() - timeFilterDays * 24 * 60 * 60 * 1000);
+
+    const rssUrl = `https://www.reddit.com/search.rss?q=${encodeURIComponent(searchQuery)}&sort=new&t=${redditTimePeriod}`;
 
     const response = await fetch(rssUrl, {
       headers: { "User-Agent": "EchoLeadsBot/1.1.0 (web3/worker)" }
@@ -67,6 +72,10 @@ async function processLeads(env: Bindings) {
       const author = item.author?.name || "";
       const id = item.id || "";
       const url = item.link?.["@_href"] || "";
+      const publishedAt = item.updated ? new Date(item.updated) : null;
+
+      // Skip posts older than the campaign's time filter
+      if (publishedAt && publishedAt < cutoffDate) continue;
 
       // 3. Pre-filter by negative keywords
       const negativeKeywords = campaign.keywords

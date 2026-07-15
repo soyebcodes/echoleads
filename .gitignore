@@ -20,10 +20,10 @@ build/
 *.tsbuildinfo
 
 # Environment variables (CRITICAL)
-# .env
-# .env.*
-# !.env.example
-# .env.local
+.env
+.env.*
+!.env.example
+.env.local
 
 # MacOS/Windows system files
 .DS_Store

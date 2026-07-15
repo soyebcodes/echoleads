@@ -52,9 +52,9 @@ export default function CampaignWizard() {
     defaultValues: {
       leadType: "product",
       keywords: [{ phrase: "", isNegative: false }],
-      voiceSamples: [{ 
-        samplePostContext: "Someone asking for a recommendation for a [your product/service category] on r/software.", 
-        userReply: "Hey! I actually built [EchoLeads] for exactly this. It helps you [monitor reddit]. Happy to share more if you're interested!" 
+      voiceSamples: [{
+        samplePostContext: "Someone asking for a recommendation for a [your product/service category] on r/software.",
+        userReply: "Hey! I actually built [EchoLeads] for exactly this. It helps you [monitor reddit]. Happy to share more if you're interested!"
       }],
     },
   });
@@ -99,30 +99,27 @@ export default function CampaignWizard() {
           <div key={step} className="flex-1 flex items-center">
             <div className="relative flex flex-col items-center">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                  i <= currentStep
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${i <= currentStep
                     ? "bg-indigo-600 border-indigo-600 text-white"
                     : "border-slate-800 text-slate-500"
-                }`}
+                  }`}
               >
                 {i < currentStep ? (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
+                    <polyline points="20 6 9 17 4 12" />
                   </svg>
                 ) : (
                   i + 1
                 )}
               </div>
-              <span className={`absolute -bottom-7 text-xs font-medium whitespace-nowrap ${
-                i <= currentStep ? "text-indigo-400" : "text-slate-500"
-              }`}>
+              <span className={`absolute -bottom-7 text-xs font-medium whitespace-nowrap ${i <= currentStep ? "text-indigo-400" : "text-slate-500"
+                }`}>
                 {step}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-4 ${
-                i < currentStep ? "bg-indigo-600" : "bg-slate-800"
-              }`} />
+              <div className={`flex-1 h-0.5 mx-4 ${i < currentStep ? "bg-indigo-600" : "bg-slate-800"
+                }`} />
             )}
           </div>
         ))}
@@ -163,11 +160,10 @@ export default function CampaignWizard() {
                           key={type}
                           type="button"
                           onClick={() => setValue("leadType", type as any)}
-                          className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all ${
-                            leadType === type
+                          className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all ${leadType === type
                               ? "border-indigo-600 bg-indigo-600/10 text-white"
                               : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700"
-                          }`}
+                            }`}
                         >
                           <span className="capitalize">{type}</span>
                         </button>
@@ -197,11 +193,10 @@ export default function CampaignWizard() {
                         <button
                           type="button"
                           onClick={() => setValue(`keywords.${index}.isNegative`, !watch(`keywords.${index}.isNegative`))}
-                          className={`px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-                            watch(`keywords.${index}.isNegative`)
+                          className={`px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${watch(`keywords.${index}.isNegative`)
                               ? "bg-red-500/20 text-red-400 border border-red-500/30"
                               : "bg-green-500/20 text-green-400 border border-green-500/30"
-                          }`}
+                            }`}
                         >
                           {watch(`keywords.${index}.isNegative`) ? "Negative" : "Positive"}
                         </button>
@@ -213,7 +208,7 @@ export default function CampaignWizard() {
                           className="text-slate-500 hover:text-red-400"
                         >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 6L6 18M6 6l12 12"/>
+                            <path d="M18 6L6 18M6 6l12 12" />
                           </svg>
                         </Button>
                       </div>
@@ -236,61 +231,60 @@ export default function CampaignWizard() {
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div className="space-y-6">
-                <div>
-                  <Label className="text-slate-300 block mb-2">Recency Filter</Label>
-                  <p className="text-xs text-slate-500 mb-3">Only find Reddit posts created within this time window.</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { label: "24 Hours", value: "1" },
-                      { label: "7 Days", value: "7" },
-                      { label: "30 Days", value: "30" },
-                      { label: "90 Days", value: "90" },
-                    ].map(({ label, value }) => {
-                      const current = watch("timeFilterDays");
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => setValue("timeFilterDays", value)}
-                          className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
-                            current === value
-                              ? "border-indigo-600 bg-indigo-600/10 text-white"
-                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <Label className="text-slate-300">Min Likes</Label>
-                    <Input
-                      type="number"
-                      {...register("minLikes")}
-                      className="bg-slate-800/50 border-white/10 text-white mt-1.5"
+                    <Label className="text-slate-300 block mb-2">Recency Filter</Label>
+                    <p className="text-xs text-slate-500 mb-3">Only find Reddit posts created within this time window.</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { label: "24 Hours", value: "1" },
+                        { label: "7 Days", value: "7" },
+                        { label: "30 Days", value: "30" },
+                        { label: "90 Days", value: "90" },
+                      ].map(({ label, value }) => {
+                        const current = watch("timeFilterDays");
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setValue("timeFilterDays", value)}
+                            className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${current === value
+                                ? "border-indigo-600 bg-indigo-600/10 text-white"
+                                : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700"
+                              }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <Label className="text-slate-300">Min Likes</Label>
+                      <Input
+                        type="number"
+                        {...register("minLikes")}
+                        className="bg-slate-800/50 border-white/10 text-white mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-slate-300">Min Comments</Label>
+                      <Input
+                        type="number"
+                        {...register("minComments")}
+                        className="bg-slate-800/50 border-white/10 text-white mt-1.5"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-slate-300">Target Customer Description</Label>
+                    <textarea
+                      {...register("targetDescription")}
+                      rows={3}
+                      placeholder="e.g. Founders looking for sales automation tools"
+                      className="w-full bg-slate-800/50 border border-white/10 rounded-lg p-3 text-sm text-white mt-1.5"
                     />
                   </div>
-                  <div>
-                    <Label className="text-slate-300">Min Comments</Label>
-                    <Input
-                      type="number"
-                      {...register("minComments")}
-                      className="bg-slate-800/50 border-white/10 text-white mt-1.5"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-slate-300">Target Customer Description</Label>
-                  <textarea
-                    {...register("targetDescription")}
-                    rows={3}
-                    placeholder="e.g. Founders looking for sales automation tools"
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-lg p-3 text-sm text-white mt-1.5"
-                  />
-                </div>
                 </div>
                 <div>
                   <Label className="text-slate-300">Exclude Keywords/Context</Label>
@@ -301,7 +295,6 @@ export default function CampaignWizard() {
                     className="w-full bg-slate-800/50 border border-white/10 rounded-lg p-3 text-sm text-white mt-1.5"
                   />
                 </div>
-              </div>
               </div>
             )}
 
@@ -320,9 +313,9 @@ export default function CampaignWizard() {
                         onClick={() => removeVoice(index)}
                         className="absolute top-4 right-4 text-slate-500 hover:text-red-400"
                       >
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 6L6 18M6 6l12 12"/>
-                          </svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
                       </button>
                       <div>
                         <Label className="text-slate-400 text-xs uppercase tracking-wider font-bold">Post Context</Label>
@@ -387,7 +380,7 @@ export default function CampaignWizard() {
           </form>
         </CardContent>
       </Card>
-      
+
       {/* Toast provider needed if not at root */}
     </div>
   );

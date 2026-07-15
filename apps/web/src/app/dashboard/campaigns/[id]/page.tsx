@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, MessageSquare, Key, Clock, ThumbsUp, MessageCircle } from "lucide-react";
 
-export default async function CampaignDetailsPage({ params }: { params: { id: string } }) {
-  const campaign = await getCampaignById(params.id);
+export default async function CampaignDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const campaign = await getCampaignById(id);
 
   if (!campaign) {
     notFound();

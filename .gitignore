@@ -2,6 +2,9 @@
 node_modules/
 jspm_packages/
 
+# agent
+.kilo
+
 # Next.js build output
 apps/web/.next/
 apps/web/out/

@@ -5,6 +5,8 @@ import { generateAIResponse, markAsContacted } from "@/app/actions/leads";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { Search } from "lucide-react";
 
 export default function LeadsTable({ initialLeads }: { initialLeads: any[] }) {
   const [leads, setLeads] = useState(initialLeads);
@@ -30,8 +32,37 @@ export default function LeadsTable({ initialLeads }: { initialLeads: any[] }) {
   return (
     <div className="space-y-4">
       {leads.length === 0 ? (
-        <Card className="p-12 text-center bg-slate-900/40 border-white/5">
-           <p className="text-slate-500">No leads captured yet. Your worker will find them soon!</p>
+        <Card className="p-16 flex flex-col items-center justify-center text-center bg-slate-900/40 border-white/5 relative overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative z-10 flex flex-col items-center"
+          >
+            <div className="w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center mb-8 relative">
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 rounded-full border-t-2 border-indigo-500/40 border-r-2 border-transparent border-b-2 border-transparent border-l-2 border-transparent"
+              />
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Search className="w-10 h-10 text-indigo-400" />
+              </motion.div>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Scanning for Leads...</h3>
+            <p className="text-slate-400 max-w-sm mx-auto text-sm leading-relaxed">
+              Your worker is actively monitoring Reddit communities to capture high-intent prospects based on your campaign criteria.
+            </p>
+          </motion.div>
+          
+          <motion.div 
+            animate={{ opacity: [0.05, 0.15, 0.05], scale: [1, 1.2, 1] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/30 rounded-full blur-[80px] pointer-events-none"
+          />
         </Card>
       ) : (
         leads.map((lead) => (

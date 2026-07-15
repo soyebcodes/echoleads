@@ -39,7 +39,7 @@ async function processLeads(env: Bindings) {
     // In a real app, you'd iterate subreddits or use a search RSS
     const rssUrl = `https://www.reddit.com/r/saas/new.rss`;
     const response = await fetch(rssUrl, {
-      headers: { "User-Agent": "EchoLeads/1.0.0" }
+      headers: { "User-Agent": "EchoLeadsBot/1.1.0 (web3/worker)" }
     });
     
     if (!response.ok) continue;
@@ -66,6 +66,18 @@ async function processLeads(env: Bindings) {
       );
 
       if (hasNegative) continue;
+
+      // Pre-filter by positive keywords (must have at least one if they exist)
+      const positiveKeywords = campaign.keywords
+        .filter((k: any) => !k.isNegative)
+        .map((k: any) => k.phrase.toLowerCase());
+
+      if (positiveKeywords.length > 0) {
+        const hasPositive = positiveKeywords.some((kw: string) => 
+          title.toLowerCase().includes(kw) || content.toLowerCase().includes(kw)
+        );
+        if (!hasPositive) continue;
+      }
 
       // 4. AI Relevance Scoring (Groq)
       const score = await getAIRelevanceScore(env.GROQ_API_KEY, campaign, title, content);

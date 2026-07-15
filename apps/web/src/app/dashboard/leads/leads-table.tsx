@@ -52,10 +52,17 @@ export default function LeadsTable({ initialLeads }: { initialLeads: any[] }) {
                 <Search className="w-10 h-10 text-indigo-400" />
               </motion.div>
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Scanning for Leads...</h3>
-            <p className="text-slate-400 max-w-sm mx-auto text-sm leading-relaxed">
-              Your worker is actively monitoring Reddit communities to capture high-intent prospects based on your campaign criteria.
+            <h3 className="text-xl font-bold text-white mb-2">Monitoring Active</h3>
+            <p className="text-slate-400 max-w-sm mx-auto text-sm leading-relaxed mb-6">
+              Your AI worker is running silently in the background. Leads will appear here automatically when someone on Reddit creates a new post that matches your positive keywords.
             </p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline" 
+              className="border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 z-10"
+            >
+              Refresh Inbox
+            </Button>
           </motion.div>
           
           <motion.div 

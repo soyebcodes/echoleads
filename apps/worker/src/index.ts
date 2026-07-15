@@ -23,7 +23,7 @@ export default {
 
 async function processLeads(env: Bindings) {
   const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-  
+
   // 1. Get active campaigns
   const { data: campaigns, error: campaignError } = await supabase
     .from("campaigns")
@@ -35,19 +35,31 @@ async function processLeads(env: Bindings) {
   }
 
   for (const campaign of campaigns) {
-    // 2. Fetch Reddit RSS (simplified for now - using a generic dev subreddit or keywords)
-    // In a real app, you'd iterate subreddits or use a search RSS
-    const rssUrl = `https://www.reddit.com/r/saas/new.rss`;
+    const positiveKeywords = campaign.keywords
+      .filter((k: any) => !k.isNegative)
+      .map((k: any) => k.phrase.toLowerCase());
+
+    const searchQuery = positiveKeywords.length > 0
+      ? positiveKeywords.map((kw: string) => `"${kw}"`).join(" OR ")
+      : "saas";
+
+    const rssUrl = `https://www.reddit.com/search.rss?q=${encodeURIComponent(searchQuery)}&sort=new`;
+
     const response = await fetch(rssUrl, {
       headers: { "User-Agent": "EchoLeadsBot/1.1.0 (web3/worker)" }
     });
-    
-    if (!response.ok) continue;
-    
+
+    if (!response.ok) {
+      console.log(`[Worker] Reddit returned ${response.status} for campaign ${campaign.name}`);
+      continue;
+    }
+
     const xml = await response.text();
     const parser = new XMLParser();
     const feed = parser.parse(xml);
     const items = feed.feed?.entry || [];
+
+    let matchedPosts = 0;
 
     for (const item of items) {
       const title = item.title || "";
@@ -61,7 +73,7 @@ async function processLeads(env: Bindings) {
         .filter((k: any) => k.isNegative)
         .map((k: any) => k.phrase.toLowerCase());
 
-      const hasNegative = negativeKeywords.some((kw: string) => 
+      const hasNegative = negativeKeywords.some((kw: string) =>
         title.toLowerCase().includes(kw) || content.toLowerCase().includes(kw)
       );
 
@@ -73,11 +85,13 @@ async function processLeads(env: Bindings) {
         .map((k: any) => k.phrase.toLowerCase());
 
       if (positiveKeywords.length > 0) {
-        const hasPositive = positiveKeywords.some((kw: string) => 
+        const hasPositive = positiveKeywords.some((kw: string) =>
           title.toLowerCase().includes(kw) || content.toLowerCase().includes(kw)
         );
         if (!hasPositive) continue;
       }
+
+      matchedPosts++;
 
       // 4. AI Relevance Scoring (Groq)
       const score = await getAIRelevanceScore(env.GROQ_API_KEY, campaign, title, content);

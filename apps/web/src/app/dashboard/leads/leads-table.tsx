@@ -1,17 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { generateAIResponse, markAsContacted } from "@/app/actions/leads";
+import { generateAIResponse, markAsContacted, deleteLead } from "@/app/actions/leads";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 
 export default function LeadsTable({ initialLeads }: { initialLeads: any[] }) {
   const [leads, setLeads] = useState(initialLeads);
   const [generatingFor, setGeneratingFor] = useState<number | null>(null);
   const [draft, setDraft] = useState<{ [key: number]: string }>({});
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Remove this lead?")) return;
+    setDeletingId(id);
+    await deleteLead(id);
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+    setDeletingId(null);
+  };
 
   const handleGenerate = async (id: number) => {
     setGeneratingFor(id);
@@ -86,11 +95,21 @@ export default function LeadsTable({ initialLeads }: { initialLeads: any[] }) {
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                    lead.status === "new" ? "bg-indigo-500/10 text-indigo-400" : "bg-green-500/10 text-green-400"
-                  }`}>
-                    {lead.status}
-                 </span>
+                 <div className="flex items-center gap-2">
+                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      lead.status === "new" ? "bg-indigo-500/10 text-indigo-400" : "bg-green-500/10 text-green-400"
+                    }`}>
+                      {lead.status}
+                   </span>
+                   <button
+                     onClick={() => handleDelete(lead.id)}
+                     disabled={deletingId === lead.id}
+                     className="text-slate-600 hover:text-red-400 transition-colors disabled:opacity-50"
+                     title="Remove lead"
+                   >
+                     <Trash2 className="w-4 h-4" />
+                   </button>
+                 </div>
                  <a href={lead.url} target="_blank" className="text-xs text-slate-500 hover:text-white underline">
                     View on Reddit
                  </a>

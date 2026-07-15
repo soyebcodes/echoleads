@@ -235,6 +235,35 @@ export default function CampaignWizard() {
             {/* Step 3: Targeting */}
             {currentStep === 2 && (
               <div className="space-y-6">
+                <div className="space-y-6">
+                <div>
+                  <Label className="text-slate-300 block mb-2">Recency Filter</Label>
+                  <p className="text-xs text-slate-500 mb-3">Only find Reddit posts created within this time window.</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: "24 Hours", value: "1" },
+                      { label: "7 Days", value: "7" },
+                      { label: "30 Days", value: "30" },
+                      { label: "90 Days", value: "90" },
+                    ].map(({ label, value }) => {
+                      const current = watch("timeFilterDays");
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setValue("timeFilterDays", value)}
+                          className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                            current === value
+                              ? "border-indigo-600 bg-indigo-600/10 text-white"
+                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <Label className="text-slate-300">Min Likes</Label>
@@ -262,6 +291,7 @@ export default function CampaignWizard() {
                     className="w-full bg-slate-800/50 border border-white/10 rounded-lg p-3 text-sm text-white mt-1.5"
                   />
                 </div>
+                </div>
                 <div>
                   <Label className="text-slate-300">Exclude Keywords/Context</Label>
                   <textarea
@@ -271,6 +301,7 @@ export default function CampaignWizard() {
                     className="w-full bg-slate-800/50 border border-white/10 rounded-lg p-3 text-sm text-white mt-1.5"
                   />
                 </div>
+              </div>
               </div>
             )}
 

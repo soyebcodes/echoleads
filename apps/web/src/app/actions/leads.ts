@@ -77,3 +77,8 @@ export async function markAsContacted(leadId: number) {
   await db.update(leads).set({ status: "contacted" }).where(eq(leads.id, leadId));
   revalidatePath("/dashboard/leads");
 }
+
+export async function deleteLead(leadId: number) {
+  await db.delete(leads).where(eq(leads.id, leadId));
+  revalidatePath("/dashboard/leads");
+}

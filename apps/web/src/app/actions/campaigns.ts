@@ -88,3 +88,15 @@ export async function getCampaignById(id: string) {
     voiceSamples: campaignVoiceSamples,
   };
 }
+
+export async function deleteCampaign(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { eq, and } = await import("drizzle-orm");
+
+  if (!user) throw new Error("Unauthorized");
+
+  await db.delete(campaigns).where(and(eq(campaigns.id, id), eq(campaigns.userId, user.id)));
+  revalidatePath("/dashboard/campaigns");
+  revalidatePath("/dashboard");
+}

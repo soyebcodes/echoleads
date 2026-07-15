@@ -24,6 +24,8 @@ build/
 .env.*
 !.env.example
 .env.local
+.dev.vars
+!.dev.vars.example
 
 # MacOS/Windows system files
 .DS_Store

@@ -22,12 +22,17 @@ app.post("/run", async (c) => {
     c.req.header("authorization")?.replace(/^Bearer\s+/i, "");
 
   if (env.WORKER_API_KEY && providedToken !== env.WORKER_API_KEY) {
+    console.warn("[Worker] Manual trigger rejected: invalid token");
     return c.json({ error: "Unauthorized" }, 401);
   }
 
   const body = await c.req.json().catch(() => ({}));
   const campaignId =
     typeof body?.campaignId === "string" ? body.campaignId : undefined;
+
+  console.log(
+    `[Worker] Manual trigger received for campaign: ${campaignId ?? "all campaigns"}`,
+  );
 
   await processLeads(env, { campaignId });
   return c.json({ ok: true, campaignId: campaignId ?? null });

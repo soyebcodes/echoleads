@@ -19,6 +19,9 @@ export const campaigns = pgTable("campaigns", {
   minComments: integer("min_comments").default(0),
   targetDescription: text("target_description"),
   excludeDescription: text("exclude_description"),
+  lastRunAt: timestamp("last_run_at"),
+  lastRunStatus: text("last_run_status"),
+  lastRunError: text("last_run_error"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

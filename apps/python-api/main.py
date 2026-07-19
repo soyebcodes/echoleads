@@ -1,6 +1,7 @@
 import os
 import re
-from typing import List, Optional
+from pathlib import Path
+from typing import Optional
 from bs4 import BeautifulSoup
 import requests
 import psycopg2
@@ -8,7 +9,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-load_dotenv()
+for env_path in [
+    Path(__file__).resolve().parent / ".env",
+    Path(__file__).resolve().parents[1] / "web" / ".env",
+    Path(__file__).resolve().parents[2] / ".env",
+]:
+    load_dotenv(env_path)
 
 app = FastAPI(title="EchoLeads Python API", version="1.0.0")
 
@@ -30,6 +36,11 @@ class LeadPayload(BaseModel):
     status: str = "new"
 
 
+@app.get("/")
+def root() -> dict:
+    return {"status": "ok"}
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
@@ -40,67 +51,73 @@ def run_scan(payload: RunRequest) -> dict:
     if not DATABASE_URL:
         raise HTTPException(status_code=500, detail="DATABASE_URL is not configured")
 
-    conn = psycopg2.connect(DATABASE_URL)
-    cur = conn.cursor()
+    conn = None
+    cur = None
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
 
-    cur.execute(
-        """
-        SELECT id, name, description, target_description, lead_type, time_filter_days
-        FROM campaigns
-        WHERE (%s::uuid IS NULL OR id = %s)
-        ORDER BY created_at DESC
-        LIMIT 5
-        """,
-        (payload.campaign_id, payload.campaign_id),
-    )
-    campaigns = cur.fetchall()
+        cur.execute(
+            """
+            SELECT id, name, description, target_description, lead_type, time_filter_days
+            FROM campaigns
+            WHERE (%s::uuid IS NULL OR id = %s)
+            ORDER BY created_at DESC
+            LIMIT 5
+            """,
+            (payload.campaign_id, payload.campaign_id),
+        )
+        campaigns = cur.fetchall()
 
-    if not campaigns:
-        cur.close()
-        conn.close()
-        return {"status": "ok", "message": "No campaigns found"}
+        if not campaigns:
+            return {"status": "ok", "message": "No campaigns found"}
 
-    for campaign in campaigns:
-        campaign_id, name, description, target_description, lead_type, time_filter_days = campaign
-        search_query = build_search_query(name, description, target_description, lead_type)
-        rss_url = f"https://www.reddit.com/search.rss?q={requests.utils.quote(search_query)}&sort=new&t=week"
+        for campaign in campaigns:
+            campaign_id, name, description, target_description, lead_type, time_filter_days = campaign
+            search_query = build_search_query(name, description, target_description, lead_type)
+            rss_url = f"https://www.reddit.com/search.rss?q={requests.utils.quote(search_query)}&sort=new&t=week"
 
-        try:
-            response = requests.get(rss_url, timeout=20, headers={"User-Agent": "EchoLeadsBot/1.0"})
-            response.raise_for_status()
-        except Exception as exc:
-            print(f"Reddit fetch failed for {name}: {exc}")
-            continue
-
-        soup = BeautifulSoup(response.text, "xml")
-        entries = soup.find_all("entry")
-        for entry in entries:
-            title = clean_text(entry.title.get_text() if entry.title else "")
-            content = clean_text(entry.content.get_text() if entry.content else "")
-            author = clean_text(entry.author.find("name").get_text() if entry.author and entry.author.find("name") else "")
-            url = entry.link.get("href", "") if entry.link else ""
-            post_id = entry.id.get_text() if entry.id else ""
-
-            if not title and not content:
+            try:
+                response = requests.get(rss_url, timeout=20, headers={"User-Agent": "EchoLeadsBot/1.0"})
+                response.raise_for_status()
+            except Exception as exc:
+                print(f"Reddit fetch failed for {name}: {exc}")
                 continue
 
-            score = score_relevance(title, content, description, target_description)
-            if score < 70:
-                continue
+            soup = BeautifulSoup(response.text, "xml")
+            entries = soup.find_all("entry")
+            for entry in entries:
+                title = clean_text(entry.title.get_text() if entry.title else "")
+                content = clean_text(entry.content.get_text() if entry.content else "")
+                author = clean_text(entry.author.find("name").get_text() if entry.author and entry.author.find("name") else "")
+                url = entry.link.get("href", "") if entry.link else ""
+                post_id = entry.id.get_text() if entry.id else ""
 
-            cur.execute(
-                """
-                INSERT INTO leads (campaign_id, reddit_post_id, title, content, url, author, ai_relevance_score, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (reddit_post_id) DO NOTHING
-                """,
-                (campaign_id, post_id, title, content, url, author, score, "new"),
-            )
+                if not title and not content:
+                    continue
 
-    conn.commit()
-    cur.close()
-    conn.close()
-    return {"status": "ok", "processed": len(campaigns)}
+                score = score_relevance(title, content, description, target_description)
+                if score < 70:
+                    continue
+
+                cur.execute(
+                    """
+                    INSERT INTO leads (campaign_id, reddit_post_id, title, content, url, author, ai_relevance_score, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (reddit_post_id) DO NOTHING
+                    """,
+                    (campaign_id, post_id, title, content, url, author, score, "new"),
+                )
+
+        conn.commit()
+        return {"status": "ok", "processed": len(campaigns)}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
 
 
 def build_search_query(name: str, description: Optional[str], target_description: Optional[str], lead_type: Optional[str]) -> str:

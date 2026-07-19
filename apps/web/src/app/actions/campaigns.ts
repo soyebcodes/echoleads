@@ -9,7 +9,35 @@ import { eq, and } from "drizzle-orm";
 
 const STALE_RUNNING_THRESHOLD_MS = 5 * 60 * 1000;
 
-async function triggerWorkerRun(campaignId: string) {
+async function triggerScanRun(campaignId: string) {
+  const pythonApiUrl =
+    process.env.PYTHON_API_URL || process.env.PYTHON_BACKEND_URL;
+
+  if (pythonApiUrl) {
+    try {
+      const response = await fetch(`${pythonApiUrl.replace(/\/$/, "")}/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ campaign_id: campaignId }),
+      });
+
+      if (!response.ok) {
+        console.error(
+          `Failed to trigger Python API run for campaign ${campaignId}:`,
+          response.status,
+        );
+      }
+      return;
+    } catch (error) {
+      console.error(
+        `Error triggering Python API run for campaign ${campaignId}:`,
+        error,
+      );
+    }
+  }
+
   const workerUrl =
     process.env.WORKER_TRIGGER_URL ||
     process.env.CLOUDFLARE_WORKER_URL ||
@@ -95,7 +123,7 @@ export async function createCampaign(data: any) {
       );
     }
 
-    void triggerWorkerRun(newCampaign.id);
+    void triggerScanRun(newCampaign.id);
 
     revalidatePath("/dashboard/campaigns");
     return { success: true, id: newCampaign.id };
@@ -209,7 +237,7 @@ export async function runCampaignNow(id: string) {
     );
   }
 
-  await triggerWorkerRun(id);
+  await triggerScanRun(id);
   revalidatePath("/dashboard/campaigns");
   return { success: true };
 }

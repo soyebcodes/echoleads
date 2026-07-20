@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, Radar, Users, Settings, LogOut } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { Brand } from "@/components/brand";
-import type { User } from "@supabase/supabase-js";
 
 const NAV = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard, exact: true },
@@ -14,7 +13,7 @@ const NAV = [
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-export default function Sidebar({ user }: { user: User }) {
+export default function Sidebar({ name }: { name: string }) {
   const pathname = usePathname();
 
   return (
@@ -47,9 +46,9 @@ export default function Sidebar({ user }: { user: User }) {
       <div className="border-t border-sidebar-border p-3">
         <div className="flex items-center gap-3 px-2 py-2">
           <div className="grid h-8 w-8 place-items-center rounded-full bg-ember text-xs font-semibold text-ember-foreground">
-            {user.email?.[0]?.toUpperCase()}
+            {name[0]?.toUpperCase()}
           </div>
-          <span className="text-xs text-sidebar-foreground truncate flex-1">{user.email}</span>
+          <span className="text-xs text-sidebar-foreground truncate flex-1">{name}</span>
         </div>
         <form action={logout}>
           <button

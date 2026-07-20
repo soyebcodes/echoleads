@@ -8,6 +8,14 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
+export const profiles = pgTable("profiles", {
+  id: uuid("id").primaryKey(),
+  name: text("name").notNull().default(""),
+  avatarUrl: text("avatar_url"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const campaigns = pgTable("campaigns", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull(),

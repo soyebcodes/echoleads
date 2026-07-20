@@ -7,10 +7,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name")
+    .eq("id", user.id)
+    .maybeSingle();
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <Sidebar user={user} />
+      <Sidebar name={profile?.name || "there"} />
       <div className="flex flex-1 flex-col min-w-0">
         <header className="h-16 flex items-center justify-end gap-2 px-6 border-b border-border bg-background/80 backdrop-blur">
           <ThemeToggle />

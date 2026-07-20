@@ -1,9 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { User, Palette, Bell } from "lucide-react";
+import { ProfileNameForm } from "./profile-name-form";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("name").eq("id", user.id).maybeSingle()
+    : { data: null };
 
   return (
     <div className="p-6 md:p-8 space-y-8">
@@ -24,6 +28,7 @@ export default async function SettingsPage() {
             </div>
           </div>
           <div className="space-y-4">
+            <ProfileNameForm initialName={profile?.name ?? ""} />
             <div>
               <label className="block text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>
               <input type="email" value={user?.email ?? ""} readOnly className="w-full h-11 rounded-lg border border-border bg-surface px-3.5 text-sm text-muted-foreground" />

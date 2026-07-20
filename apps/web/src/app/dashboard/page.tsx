@@ -7,6 +7,9 @@ import { getLeads } from "@/app/actions/leads";
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("name").eq("id", user.id).maybeSingle()
+    : { data: null };
   const campaigns = await getCampaigns();
   const leads = await getLeads();
 
@@ -26,7 +29,7 @@ export default async function DashboardPage() {
     <div className="p-6 md:p-8 space-y-8">
       <div>
         <h1 className="text-display text-3xl font-bold tracking-tight">
-          Welcome back, {user?.email?.split("@")[0]}
+          Welcome back, {profile?.name || "there"}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Here's what your Reddit scanner picked up.</p>
       </div>

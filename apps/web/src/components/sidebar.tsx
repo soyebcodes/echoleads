@@ -13,8 +13,9 @@ const NAV = [
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-export default function Sidebar({ name }: { name: string }) {
+export default function Sidebar({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
   const pathname = usePathname();
+  const initial = name[0]?.toUpperCase() ?? "U";
 
   return (
     <aside className="w-64 flex-shrink-0 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col">
@@ -45,15 +46,19 @@ export default function Sidebar({ name }: { name: string }) {
 
       <div className="border-t border-sidebar-border p-3">
         <div className="flex items-center gap-3 px-2 py-2">
-          <div className="grid h-8 w-8 place-items-center rounded-full bg-ember text-xs font-semibold text-ember-foreground">
-            {name[0]?.toUpperCase()}
+          <div
+            className="grid h-8 w-8 place-items-center rounded-full bg-ember bg-cover bg-center text-xs font-semibold text-ember-foreground"
+            style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined}
+            aria-hidden="true"
+          >
+            {avatarUrl ? null : initial}
           </div>
           <span className="text-xs text-sidebar-foreground truncate flex-1">{name}</span>
         </div>
         <form action={logout}>
           <button
             type="submit"
-            className="mt-1 flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="mt-1 flex w-full cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium text-sidebar-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             <LogOut className="h-4 w-4 text-sidebar-muted" />
             Sign out

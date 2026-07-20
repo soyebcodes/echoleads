@@ -40,3 +40,26 @@ export async function updateProfileName(
   revalidatePath("/dashboard", "layout");
   return { success: "Name saved." };
 }
+
+export async function updateProfileAvatar(path: string): Promise<ProfileNameState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || path !== `${user.id}/avatar`) {
+    return { error: "Invalid avatar upload." };
+  }
+
+  const { data } = supabase.storage.from("profile-avatars").getPublicUrl(path);
+  const { error } = await supabase
+    .from("profiles")
+    .upsert({ id: user.id, avatar_url: data.publicUrl }, { onConflict: "id" });
+
+  if (error) {
+    return { error: "We couldn't save your avatar. Please try again." };
+  }
+
+  revalidatePath("/dashboard", "layout");
+  return { success: "Avatar updated." };
+}

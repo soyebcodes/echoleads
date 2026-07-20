@@ -305,9 +305,11 @@ export default function CampaignsList({
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <button
+                    type="button"
                     onClick={() => handleRunNow(campaign.id)}
                     disabled={runningId === campaign.id}
-                    className="text-muted-foreground hover:text-ember transition-colors disabled:opacity-50"
+                    className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-ember-soft hover:text-ember disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label="Run scan now"
                     title="Run scan now"
                   >
                     <PlayCircle className="w-4 h-4" />
@@ -319,9 +321,11 @@ export default function CampaignsList({
                   ) : null}
                 </div>
                 <button
+                  type="button"
                   onClick={() => handleDelete(campaign.id)}
                   disabled={deletingId === campaign.id}
-                  className="text-sidebar-muted hover:text-destructive transition-colors disabled:opacity-50"
+                  className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-sidebar-muted transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Delete campaign"
                   title="Delete campaign"
                 >
                   <Trash2 className="w-4 h-4" />

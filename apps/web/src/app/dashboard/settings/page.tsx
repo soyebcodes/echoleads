@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { User, Palette, Bell } from "lucide-react";
+import { ProfileAvatarForm } from "./profile-avatar-form";
 import { ProfileNameForm } from "./profile-name-form";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = user
-    ? await supabase.from("profiles").select("name").eq("id", user.id).maybeSingle()
+    ? await supabase.from("profiles").select("name, avatar_url").eq("id", user.id).maybeSingle()
     : { data: null };
 
   return (
@@ -28,6 +29,7 @@ export default async function SettingsPage() {
             </div>
           </div>
           <div className="space-y-4">
+            <ProfileAvatarForm name={profile?.name ?? ""} avatarUrl={profile?.avatar_url ?? null} />
             <ProfileNameForm initialName={profile?.name ?? ""} />
             <div>
               <label className="block text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5">Email</label>

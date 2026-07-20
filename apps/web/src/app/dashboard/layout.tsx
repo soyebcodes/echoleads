@@ -9,13 +9,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect("/login");
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name")
+    .select("name, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <Sidebar name={profile?.name || "there"} />
+      <Sidebar name={profile?.name || "there"} avatarUrl={profile?.avatar_url ?? null} />
       <div className="flex flex-1 flex-col min-w-0">
         <header className="h-16 flex items-center justify-end gap-2 px-6 border-b border-border bg-background/80 backdrop-blur">
           <ThemeToggle />

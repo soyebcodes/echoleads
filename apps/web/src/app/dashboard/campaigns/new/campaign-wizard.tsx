@@ -100,8 +100,8 @@ export default function CampaignWizard() {
             <div className="relative flex flex-col items-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${i <= currentStep
-                    ? "bg-indigo-600 border-indigo-600 text-white"
-                    : "border-slate-800 text-slate-500"
+                    ? "bg-ember border-ember text-ember-foreground"
+                    : "border-border text-muted-foreground"
                   }`}
               >
                 {i < currentStep ? (
@@ -112,20 +112,20 @@ export default function CampaignWizard() {
                   i + 1
                 )}
               </div>
-              <span className={`absolute -bottom-7 text-xs font-medium whitespace-nowrap ${i <= currentStep ? "text-indigo-400" : "text-slate-500"
+              <span className={`absolute -bottom-7 text-xs font-medium whitespace-nowrap ${i <= currentStep ? "text-ember" : "text-muted-foreground"
                 }`}>
                 {step}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-4 ${i < currentStep ? "bg-indigo-600" : "bg-slate-800"
+              <div className={`flex-1 h-0.5 mx-4 ${i < currentStep ? "bg-ember" : "bg-border"
                 }`} />
             )}
           </div>
         ))}
       </div>
 
-      <Card className="bg-slate-900/40 backdrop-blur-md border-white/5 overflow-hidden">
+      <Card className="bg-card border-border shadow-soft overflow-hidden">
         <CardContent className="p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {/* Step 1: Basics */}
@@ -133,27 +133,27 @@ export default function CampaignWizard() {
               <div className="space-y-6">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name" className="text-slate-300">Campaign Name</Label>
+                    <Label htmlFor="name" className="text-foreground">Campaign Name</Label>
                     <Input
                       id="name"
                       {...register("name")}
                       placeholder="e.g. EchoLeads Launch"
-                      className="bg-slate-800/50 border-white/10 text-white mt-1.5"
+                      className="bg-surface border-border text-foreground mt-1.5"
                     />
                     {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="description" className="text-slate-300">Description</Label>
+                    <Label htmlFor="description" className="text-foreground">Description</Label>
                     <textarea
                       id="description"
                       {...register("description")}
                       rows={3}
                       placeholder="What are you promoting?"
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-1.5"
+                      className="w-full bg-surface border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring mt-1.5"
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-300 mb-2 block">I am promoting a...</Label>
+                    <Label className="text-foreground mb-2 block">I am promoting a...</Label>
                     <div className="flex gap-4">
                       {["product", "service"].map((type) => (
                         <button
@@ -161,8 +161,8 @@ export default function CampaignWizard() {
                           type="button"
                           onClick={() => setValue("leadType", type as any)}
                           className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all ${leadType === type
-                              ? "border-indigo-600 bg-indigo-600/10 text-white"
-                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700"
+                              ? "border-ember bg-ember-soft text-foreground"
+                              : "border-border bg-surface text-muted-foreground hover:border-ember/50"
                             }`}
                         >
                           <span className="capitalize">{type}</span>
@@ -179,8 +179,8 @@ export default function CampaignWizard() {
               <div className="space-y-6">
                 <div>
                   <div className="mb-4">
-                    <h3 className="text-lg font-medium text-white">Keywords</h3>
-                    <p className="text-sm text-slate-400">Add phrases that indicate high intent. Use negative keywords to filter out noise.</p>
+                    <h3 className="text-display text-lg font-medium">Keywords</h3>
+                    <p className="text-sm text-muted-foreground">Add phrases that indicate high intent. Use negative keywords to filter out noise.</p>
                   </div>
                   <div className="space-y-3">
                     {keywordFields.map((field, index) => (
@@ -188,7 +188,7 @@ export default function CampaignWizard() {
                         <Input
                           {...register(`keywords.${index}.phrase`)}
                           placeholder="e.g. reddit lead software"
-                          className="bg-slate-800/50 border-white/10 text-white"
+                          className="bg-surface border-border text-foreground"
                         />
                         <button
                           type="button"
@@ -205,7 +205,7 @@ export default function CampaignWizard() {
                           variant="ghost"
                           size="icon"
                           onClick={() => removeKeyword(index)}
-                          className="text-slate-500 hover:text-red-400"
+                          className="text-muted-foreground hover:text-destructive"
                         >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M18 6L6 18M6 6l12 12" />
@@ -218,7 +218,7 @@ export default function CampaignWizard() {
                     type="button"
                     variant="outline"
                     onClick={() => appendKeyword({ phrase: "", isNegative: false })}
-                    className="mt-4 border-slate-700 text-slate-300 hover:bg-white/5"
+                    className="mt-4 border-border text-foreground hover:bg-accent"
                   >
                     Add Keyword
                   </Button>
@@ -232,8 +232,8 @@ export default function CampaignWizard() {
               <div className="space-y-6">
                 <div className="space-y-6">
                   <div>
-                    <Label className="text-slate-300 block mb-2">Recency Filter</Label>
-                    <p className="text-xs text-slate-500 mb-3">Only find Reddit posts created within this time window.</p>
+                    <Label className="text-foreground block mb-2">Recency Filter</Label>
+                    <p className="text-xs text-muted-foreground mb-3">Only find Reddit posts created within this time window.</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {[
                         { label: "24 Hours", value: "1" },
@@ -248,8 +248,8 @@ export default function CampaignWizard() {
                             type="button"
                             onClick={() => setValue("timeFilterDays", value)}
                             className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${current === value
-                                ? "border-indigo-600 bg-indigo-600/10 text-white"
-                                : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700"
+                                ? "border-ember bg-ember-soft text-foreground"
+                                : "border-border bg-surface text-muted-foreground hover:border-ember/50"
                               }`}
                           >
                             {label}
@@ -260,39 +260,39 @@ export default function CampaignWizard() {
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <Label className="text-slate-300">Min Likes</Label>
+                      <Label className="text-foreground">Min Likes</Label>
                       <Input
                         type="number"
                         {...register("minLikes")}
-                        className="bg-slate-800/50 border-white/10 text-white mt-1.5"
+                        className="bg-surface border-border text-foreground mt-1.5"
                       />
                     </div>
                     <div>
-                      <Label className="text-slate-300">Min Comments</Label>
+                      <Label className="text-foreground">Min Comments</Label>
                       <Input
                         type="number"
                         {...register("minComments")}
-                        className="bg-slate-800/50 border-white/10 text-white mt-1.5"
+                        className="bg-surface border-border text-foreground mt-1.5"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label className="text-slate-300">Target Customer Description</Label>
+                    <Label className="text-foreground">Target Customer Description</Label>
                     <textarea
                       {...register("targetDescription")}
                       rows={3}
                       placeholder="e.g. Founders looking for sales automation tools"
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-lg p-3 text-sm text-white mt-1.5"
+                      className="w-full bg-surface border border-border rounded-lg p-3 text-sm text-foreground mt-1.5"
                     />
                   </div>
                 </div>
                 <div>
-                  <Label className="text-slate-300">Exclude Keywords/Context</Label>
+                  <Label className="text-foreground">Exclude Keywords/Context</Label>
                   <textarea
                     {...register("excludeDescription")}
                     rows={3}
                     placeholder="e.g. Free tools, open source, hobby projects"
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-lg p-3 text-sm text-white mt-1.5"
+                    className="w-full bg-surface border border-border rounded-lg p-3 text-sm text-foreground mt-1.5"
                   />
                 </div>
               </div>
@@ -302,35 +302,35 @@ export default function CampaignWizard() {
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div className="mb-4">
-                  <h3 className="text-lg font-medium text-white">Your Voice Samples</h3>
-                  <p className="text-sm text-slate-400">Train the AI on how you reply to leads. Provide context and your typical response.</p>
+                  <h3 className="text-display text-lg font-medium">Your Voice Samples</h3>
+                  <p className="text-sm text-muted-foreground">Train the AI on how you reply to leads. Provide context and your typical response.</p>
                 </div>
                 <div className="space-y-8">
                   {voiceFields.map((field, index) => (
-                    <div key={field.id} className="p-4 border border-white/5 rounded-xl bg-white/[0.02] space-y-4 relative">
+                    <div key={field.id} className="p-4 border border-border rounded-xl bg-surface space-y-4 relative">
                       <button
                         type="button"
                         onClick={() => removeVoice(index)}
-                        className="absolute top-4 right-4 text-slate-500 hover:text-red-400"
+                        className="absolute top-4 right-4 text-muted-foreground hover:text-destructive"
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M18 6L6 18M6 6l12 12" />
                         </svg>
                       </button>
                       <div>
-                        <Label className="text-slate-400 text-xs uppercase tracking-wider font-bold">Post Context</Label>
+                        <Label className="text-muted-foreground text-xs uppercase tracking-wider font-bold">Post Context</Label>
                         <textarea
                           {...register(`voiceSamples.${index}.samplePostContext`)}
                           rows={2}
-                          className="w-full bg-transparent border-none text-white text-sm focus:ring-0 mt-1 resize-none"
+                          className="w-full bg-transparent border-none text-foreground text-sm focus:ring-0 mt-1 resize-none"
                         />
                       </div>
-                      <div className="pt-4 border-t border-white/[0.05]">
-                        <Label className="text-slate-400 text-xs uppercase tracking-wider font-bold">Your Reply</Label>
+                      <div className="pt-4 border-t border-border">
+                        <Label className="text-muted-foreground text-xs uppercase tracking-wider font-bold">Your Reply</Label>
                         <textarea
                           {...register(`voiceSamples.${index}.userReply`)}
                           rows={3}
-                          className="w-full bg-transparent border-none text-indigo-300 text-sm focus:ring-0 mt-1 resize-none italic"
+                          className="w-full bg-transparent border-none text-ember text-sm focus:ring-0 mt-1 resize-none italic"
                         />
                       </div>
                     </div>
@@ -340,7 +340,7 @@ export default function CampaignWizard() {
                   type="button"
                   variant="outline"
                   onClick={() => appendVoice({ samplePostContext: "", userReply: "" })}
-                  className="w-full border-dashed border-slate-700 text-slate-400 hover:border-slate-500"
+                  className="w-full border-dashed border-border text-muted-foreground hover:border-ember/50"
                 >
                   Add Voice Sample
                 </Button>
@@ -349,13 +349,13 @@ export default function CampaignWizard() {
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex items-center justify-between pt-8 border-t border-white/5">
+            <div className="flex items-center justify-between pt-8 border-t border-border">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={prevStep}
                 disabled={currentStep === 0}
-                className="text-slate-400 hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 Back
               </Button>
@@ -363,7 +363,7 @@ export default function CampaignWizard() {
                 <Button
                   type="button"
                   onClick={nextStep}
-                  className="bg-indigo-600 hover:bg-indigo-500 px-8"
+                  className="bg-ember text-ember-foreground shadow-ember hover:bg-ember/90 px-8"
                 >
                   Continue
                 </Button>
@@ -371,7 +371,7 @@ export default function CampaignWizard() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-indigo-600 hover:bg-indigo-500 px-8"
+                  className="bg-ember text-ember-foreground shadow-ember hover:bg-ember/90 px-8"
                 >
                   {isSubmitting ? "Generating Campaign…" : "Create Campaign"}
                 </Button>

@@ -152,7 +152,7 @@ export default function CampaignsList({
     if (!status) {
       return {
         label: "Not run",
-        className: "bg-slate-700/60 text-slate-300 border border-slate-600/60",
+        className: "bg-muted text-muted-foreground border border-border",
       };
     }
 
@@ -179,18 +179,18 @@ export default function CampaignsList({
 
   if (campaigns.length === 0) {
     return (
-      <div className="bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-12 text-center">
+      <div className="bg-card border border-border rounded-xl p-12 text-center shadow-soft">
         <div className="max-w-sm mx-auto">
-          <h2 className="text-xl font-semibold text-white mb-2">
+          <h2 className="text-display text-xl font-semibold mb-2">
             No campaigns yet
           </h2>
-          <p className="text-slate-400 mb-6">
+          <p className="text-muted-foreground mb-6">
             Create your first campaign to start finding leads on Reddit.
           </p>
           <Link href="/dashboard/campaigns/new">
             <Button
               variant="outline"
-              className="border-slate-700 text-slate-300"
+              className="border-border text-foreground hover:bg-accent"
             >
               Create First Campaign
             </Button>
@@ -203,40 +203,40 @@ export default function CampaignsList({
   return (
     <>
       <Dialog open={scanModalOpen} onOpenChange={setScanModalOpen}>
-        <DialogContent className="sm:max-w-lg border-slate-800 bg-slate-950/95">
+        <DialogContent className="sm:max-w-lg border-border bg-card">
           <DialogHeader>
-            <DialogTitle className="text-white">Scanning for leads</DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogTitle>Scanning for leads</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               {scanCampaign?.name
                 ? `We’ve started a fresh scan for ${scanCampaign.name}. If we find matching leads, you’ll be taken straight to your inbox.`
                 : "We’ve started a fresh scan. If we find matching leads, you’ll be taken straight to your inbox."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-2xl border border-indigo-500/20 bg-slate-900/70 p-6 space-y-4">
+          <div className="rounded-xl border border-ember/20 bg-surface p-6 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Loader2
-                  className={`h-5 w-5 ${scanFoundResults ? "text-emerald-400" : "animate-spin text-indigo-400"}`}
+                  className={`h-5 w-5 ${scanFoundResults ? "text-emerald-400" : "animate-spin text-ember"}`}
                 />
                 <div>
-                  <div className="text-sm font-medium text-white">
+                  <div className="text-sm font-medium text-foreground">
                     {scanFoundResults
                       ? "We found fresh lead matches."
                       : findingMatches
                         ? "Finding matches…"
                         : "Looking through Reddit for high-intent posts..."}
                   </div>
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-muted-foreground">
                     {scanFoundResults
                       ? "Your scan surfaced new opportunities. Open the inbox to review them now."
                       : "This can take a little while. We’ll keep checking in the background and surface the results as soon as they appear."}
                   </div>
                 </div>
               </div>
-              <div className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-indigo-300 flex items-center gap-2 shrink-0">
+              <div className="rounded-full border border-ember/20 bg-ember-soft px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-ember flex items-center gap-2 shrink-0">
                 <span
-                  className={`h-2 w-2 rounded-full ${scanFoundResults ? "bg-emerald-400" : "bg-indigo-400 animate-pulse"}`}
+                  className={`h-2 w-2 rounded-full ${scanFoundResults ? "bg-emerald-400" : "bg-ember animate-pulse"}`}
                 />
                 {scanFoundResults
                   ? "Results ready"
@@ -247,13 +247,13 @@ export default function CampaignsList({
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-500">
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 <span>Progress</span>
                 <span>{scanProgress}%</span>
               </div>
-              <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${scanFoundResults ? "bg-emerald-500" : "bg-indigo-500"}`}
+                  className={`h-full rounded-full transition-all duration-500 ${scanFoundResults ? "bg-emerald-500" : "bg-ember"}`}
                   style={{ width: `${scanProgress}%` }}
                 />
               </div>
@@ -262,7 +262,7 @@ export default function CampaignsList({
             <div className="flex justify-end gap-3 pt-2">
               <Button
                 variant="outline"
-                className="border-slate-700 text-slate-300"
+                className="border-border text-foreground hover:bg-accent"
                 onClick={() => setScanModalOpen(false)}
               >
                 {scanFoundResults ? "Close" : "Keep browsing"}
@@ -284,11 +284,11 @@ export default function CampaignsList({
         {campaigns.map((campaign) => (
           <div
             key={campaign.id}
-            className="bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-6 hover:border-indigo-500/30 transition-all group"
+            className="bg-card border border-border rounded-xl p-6 hover:border-ember/40 transition-all shadow-soft group"
           >
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-white group-hover:text-indigo-400 transition-colors">
+                <h3 className="text-display text-lg font-semibold group-hover:text-ember transition-colors">
                   {campaign.name}
                 </h3>
                 <div className="mt-2 flex items-center gap-2">
@@ -297,7 +297,7 @@ export default function CampaignsList({
                   >
                     {getStatusBadge(campaign.lastRunStatus).label}
                   </span>
-                  <span className="px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
+                  <span className="px-2 py-1 rounded-md bg-ember-soft text-ember text-[10px] font-bold uppercase tracking-wider">
                     {campaign.leadType}
                   </span>
                 </div>
@@ -307,7 +307,7 @@ export default function CampaignsList({
                   <button
                     onClick={() => handleRunNow(campaign.id)}
                     disabled={runningId === campaign.id}
-                    className="text-slate-400 hover:text-indigo-400 transition-colors disabled:opacity-50"
+                    className="text-muted-foreground hover:text-ember transition-colors disabled:opacity-50"
                     title="Run scan now"
                   >
                     <PlayCircle className="w-4 h-4" />
@@ -321,34 +321,34 @@ export default function CampaignsList({
                 <button
                   onClick={() => handleDelete(campaign.id)}
                   disabled={deletingId === campaign.id}
-                  className="text-slate-600 hover:text-red-400 transition-colors disabled:opacity-50"
+                  className="text-sidebar-muted hover:text-destructive transition-colors disabled:opacity-50"
                   title="Delete campaign"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
-            <p className="text-slate-400 text-sm line-clamp-2 mb-6">
+            <p className="text-muted-foreground text-sm line-clamp-2 mb-6">
               {campaign.description || "No description provided."}
             </p>
-            <div className="pt-4 border-t border-white/5 space-y-3">
+            <div className="pt-4 border-t border-border space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex gap-4">
-                  <div className="text-xs text-slate-500">
-                    <span className="text-white font-medium">
+                  <div className="text-xs text-muted-foreground">
+                    <span className="text-foreground font-medium">
                       {campaign.leadCount ?? 0}
                     </span>{" "}
                     Leads
                   </div>
-                  <div className="text-xs text-slate-500">
-                    <span className="text-white font-medium">
+                  <div className="text-xs text-muted-foreground">
+                    <span className="text-foreground font-medium">
                       {campaign.timeFilterDays}d
                     </span>{" "}
                     Filter
                   </div>
                 </div>
-                <div className="text-right text-[11px] text-slate-400">
-                  <div className="flex items-center justify-end gap-1 text-slate-300">
+                <div className="text-right text-[11px] text-muted-foreground">
+                  <div className="flex items-center justify-end gap-1 text-foreground">
                     <Clock3 className="w-3.5 h-3.5" />
                     {campaign.lastRunAt
                       ? new Date(campaign.lastRunAt).toLocaleString()
@@ -356,11 +356,11 @@ export default function CampaignsList({
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-white/5 bg-slate-950/40 p-3">
-                <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 mb-1">
+              <div className="rounded-lg border border-border bg-surface p-3">
+                <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
                   Scan history
                 </div>
-                <div className="text-sm text-slate-300">
+                <div className="text-sm text-foreground">
                   {campaign.lastRunStatus
                     ? `${getStatusBadge(campaign.lastRunStatus).label} • ${campaign.lastRunAt ? new Date(campaign.lastRunAt).toLocaleString() : "pending"}`
                     : "No scan history yet"}
@@ -374,7 +374,7 @@ export default function CampaignsList({
               <div className="flex justify-end">
                 <Link
                   href={`/dashboard/campaigns/${campaign.id}`}
-                  className="text-xs text-indigo-400 font-medium hover:text-indigo-300"
+                  className="text-xs text-ember font-medium hover:underline"
                 >
                   View Details →
                 </Link>

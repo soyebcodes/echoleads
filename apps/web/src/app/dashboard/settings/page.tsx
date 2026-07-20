@@ -67,7 +67,7 @@ export default async function SettingsPage() {
               <p className="text-xs text-muted-foreground">Coming soon — email alerts for new hot leads</p>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">You'll be able to configure Slack, email, and webhook alerts here.</p>
+          <p className="text-sm text-muted-foreground">You&apos;ll be able to configure Slack, email, and webhook alerts here.</p>
         </section>
       </div>
     </div>

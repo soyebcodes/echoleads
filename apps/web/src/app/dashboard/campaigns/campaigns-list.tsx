@@ -16,17 +16,29 @@ import {
 import { toast } from "sonner";
 import { Trash2, PlayCircle, Clock3, Loader2 } from "lucide-react";
 
+type CampaignItem = {
+  id: string;
+  name: string;
+  description?: string | null;
+  leadType: string;
+  leadCount?: number | null;
+  timeFilterDays: number;
+  lastRunStatus?: string | null;
+  lastRunAt?: string | Date | null;
+  lastRunError?: string | null;
+};
+
 export default function CampaignsList({
   initialCampaigns,
 }: {
-  initialCampaigns: any[];
+  initialCampaigns: CampaignItem[];
 }) {
   const router = useRouter();
   const [campaigns, setCampaigns] = useState(initialCampaigns);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [runningId, setRunningId] = useState<string | null>(null);
   const [scanModalOpen, setScanModalOpen] = useState(false);
-  const [scanCampaign, setScanCampaign] = useState<any | null>(null);
+  const [scanCampaign, setScanCampaign] = useState<CampaignItem | null>(null);
   const [scanProgress, setScanProgress] = useState(0);
   const [findingMatches, setFindingMatches] = useState(false);
   const [scanFoundResults, setScanFoundResults] = useState(false);

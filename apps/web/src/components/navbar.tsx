@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navLinks = [
-  { name: "Case studies", href: "#case-studies" },
   { name: "Features", href: "#features" },
   { name: "How it works", href: "#how-it-works" },
   { name: "Pricing", href: "#pricing" },
@@ -16,97 +15,66 @@ const navLinks = [
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 16);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <motion.header
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-slate-950/80 backdrop-blur-md border-b border-white/5 py-4" : "bg-transparent py-6"
+    <header
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+        scrolled ? "border-b border-border bg-background/85 backdrop-blur-md py-3" : "py-5"
       }`}
     >
-      <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 group-hover:bg-indigo-500/30 transition-colors">
-            <span className="text-indigo-400 font-bold text-xl leading-none tracking-tighter">E</span>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white group-hover:text-indigo-100 transition-colors">
-            EchoLeads<span className="text-indigo-400">.ai</span>
-          </span>
-        </Link>
+      <div className="container mx-auto flex items-center justify-between px-6 md:px-10">
+        <Brand />
 
-        {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
-            >
-              {link.name}
+        <nav className="hidden items-center gap-8 lg:flex">
+          {navLinks.map((l) => (
+            <Link key={l.name} href={l.href} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              {l.name}
             </Link>
           ))}
         </nav>
 
-        {/* Action Button & Mobile Toggle */}
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="hidden lg:block">
-            <Button className="bg-white text-black hover:bg-slate-200 transition-colors rounded-full px-6 font-semibold">
-              Go to Dashboard
-            </Button>
-          </Link>
-          
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden text-slate-300 hover:text-white p-2"
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Link
+            href="/login"
+            className="hidden lg:inline-flex text-sm font-medium text-muted-foreground hover:text-foreground px-3 py-2"
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            Sign in
+          </Link>
+          <Link
+            href="/signup"
+            className="hidden lg:inline-flex items-center rounded-lg bg-ember px-4 py-2 text-sm font-semibold text-ember-foreground shadow-ember transition-transform hover:-translate-y-0.5"
+          >
+            Get started
+          </Link>
+          <button onClick={() => setOpen((v) => !v)} className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground">
+            {open ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Nav Menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-slate-950/95 backdrop-blur-xl border-b border-white/5 overflow-hidden"
-          >
-            <div className="px-6 py-6 flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-lg font-medium text-slate-300 hover:text-white border-b border-white/5 pb-2"
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <div className="pt-4 pb-2">
-                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full bg-white text-black hover:bg-slate-200 rounded-full h-12 text-lg font-semibold">
-                    Go to Dashboard
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
+      {open && (
+        <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-xl">
+          <div className="px-6 py-5 flex flex-col gap-3">
+            {navLinks.map((l) => (
+              <Link key={l.name} href={l.href} onClick={() => setOpen(false)} className="text-base font-medium text-foreground py-2 border-b border-border">
+                {l.name}
+              </Link>
+            ))}
+            <Link href="/login" onClick={() => setOpen(false)} className="text-base font-medium text-foreground py-2">Sign in</Link>
+            <Link href="/signup" onClick={() => setOpen(false)} className="mt-2 inline-flex items-center justify-center rounded-lg bg-ember px-4 py-3 text-sm font-semibold text-ember-foreground shadow-ember">
+              Get started
+            </Link>
+          </div>
+        </div>
+      )}
+    </header>
   );
 }

@@ -22,44 +22,31 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1.5">
-          Email
-        </label>
+        <label htmlFor="email" className="block text-sm font-medium mb-1.5">Email</label>
         <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
+          id="email" name="email" type="email" required autoComplete="email"
           placeholder="you@example.com"
-          className="w-full bg-slate-800/60 border border-white/10 text-white placeholder-slate-500 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+          className="w-full h-11 rounded-lg border border-border bg-surface px-3.5 text-sm outline-none ring-ember/40 transition-all placeholder:text-muted-foreground focus:border-ember focus:ring-2"
         />
       </div>
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1.5">
-          Password
-        </label>
+        <label htmlFor="password" className="block text-sm font-medium mb-1.5">Password</label>
         <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          autoComplete="current-password"
+          id="password" name="password" type="password" required autoComplete="current-password"
           placeholder="••••••••"
-          className="w-full bg-slate-800/60 border border-white/10 text-white placeholder-slate-500 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+          className="w-full h-11 rounded-lg border border-border bg-surface px-3.5 text-sm outline-none ring-ember/40 transition-all placeholder:text-muted-foreground focus:border-ember focus:ring-2"
         />
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-400/20 rounded-lg px-3.5 py-2.5 text-sm text-red-400">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">
           {error}
         </div>
       )}
 
       <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-colors"
+        type="submit" disabled={loading}
+        className="w-full h-11 rounded-lg bg-ember text-ember-foreground font-semibold text-sm shadow-ember transition-transform hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
       >
         {loading ? "Signing in…" : "Sign in"}
       </button>

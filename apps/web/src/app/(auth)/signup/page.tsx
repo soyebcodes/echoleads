@@ -1,39 +1,45 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import SignupForm from "./signup-form";
 
 export const metadata: Metadata = {
-  title: "Sign Up – EchoLeads",
+  title: "Sign up – EchoLeads",
   description: "Create your EchoLeads account",
 };
 
-export default function SignupPage() {
+export default function Page() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="white"/>
-              </svg>
-            </div>
-            <span className="text-2xl font-bold text-white tracking-tight">EchoLeads</span>
-          </div>
-          <p className="text-slate-400 text-sm">Start finding leads on Reddit today.</p>
-        </div>
-
-        {/* Card */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
-          <h1 className="text-xl font-semibold text-white mb-1">Create an account</h1>
-          <p className="text-slate-400 text-sm mb-6">Free to start, no credit card required</p>
-          <SignupForm />
-          <p className="text-center text-sm text-slate-500 mt-6">
-            Already have an account?{" "}
-            <a href="/login" className="text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
-              Sign in
-            </a>
+    <div className="min-h-screen grid lg:grid-cols-2 bg-background text-foreground">
+      <div className="hidden lg:flex flex-col justify-between p-10 bg-surface border-r border-border relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid opacity-30" aria-hidden />
+        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-ember/20 blur-3xl" aria-hidden />
+        <div className="relative"><Brand /></div>
+        <div className="relative space-y-3">
+          <p className="text-display text-xs font-semibold uppercase tracking-[0.2em] text-ember">Trusted by 400+ founders</p>
+          <p className="text-display text-2xl font-semibold tracking-tight leading-snug max-w-md">
+            "We closed 3 deals in the first week — leads I never would have found scrolling Reddit myself."
           </p>
+          <p className="text-sm text-muted-foreground">— Priya, indie SaaS founder</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between p-6 lg:justify-end">
+          <div className="lg:hidden"><Brand /></div>
+          <ThemeToggle />
+        </div>
+        <div className="flex-1 flex items-center justify-center px-6 pb-12">
+          <div className="w-full max-w-sm">
+            <h1 className="text-display text-2xl font-bold tracking-tight mb-1">Create your account</h1>
+            <p className="text-sm text-muted-foreground mb-8">Free forever plan — no credit card required</p>
+            <SignupForm />
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Already have an account?{" "}
+              <Link href="/login" className="text-ember hover:underline font-medium">Sign in</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import {
   generateAIResponse,
   markAsContacted,
@@ -8,15 +9,42 @@ import {
 } from "@/app/actions/leads";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { ExternalLink, Search, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Search, Trash2 } from "lucide-react";
 
-export default function LeadsTable({ initialLeads }: { initialLeads: any[] }) {
+type LeadItem = {
+  id: number;
+  title: string;
+  content: string | null;
+  url: string;
+  author: string;
+  aiRelevanceScore: number | null;
+  status: string | null;
+  campaignName: string;
+};
+
+type Pagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export default function LeadsTable({
+  initialLeads,
+  pagination,
+}: {
+  initialLeads: LeadItem[];
+  pagination: Pagination;
+}) {
   const [leads, setLeads] = useState(initialLeads);
   const [generatingFor, setGeneratingFor] = useState<number | null>(null);
   const [draft, setDraft] = useState<{ [key: number]: string }>({});
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const firstLeadNumber = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1;
+  const lastLeadNumber = Math.min(pagination.page * pagination.pageSize, pagination.total);
+  const previousHref = pagination.page > 2 ? `/dashboard/leads?page=${pagination.page - 1}` : "/dashboard/leads";
+  const nextHref = `/dashboard/leads?page=${pagination.page + 1}`;
 
   const sanitizeContent = (value?: string | null) => {
     if (!value) return "No excerpt available yet.";
@@ -133,12 +161,12 @@ export default function LeadsTable({ initialLeads }: { initialLeads: any[] }) {
                     Match Score:{" "}
                     <span
                       className={
-                        lead.aiRelevanceScore >= 90
+                        (lead.aiRelevanceScore ?? 0) >= 90
                           ? "text-emerald-400 font-bold"
                           : "text-ember font-bold"
                       }
                     >
-                      {lead.aiRelevanceScore}%
+                      {lead.aiRelevanceScore ?? 0}%
                     </span>
                   </span>
                 </div>
@@ -155,9 +183,11 @@ export default function LeadsTable({ initialLeads }: { initialLeads: any[] }) {
                     {lead.status}
                   </span>
                   <button
+                    type="button"
                     onClick={() => handleDelete(lead.id)}
                     disabled={deletingId === lead.id}
-                    className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                    className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label="Remove lead"
                     title="Remove lead"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -221,6 +251,49 @@ export default function LeadsTable({ initialLeads }: { initialLeads: any[] }) {
           </div>
         ))
       )}
+
+      {pagination.total > 0 ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{firstLeadNumber}</span>-
+            <span className="font-medium text-foreground">{lastLeadNumber}</span> of{" "}
+            <span className="font-medium text-foreground">{pagination.total}</span> leads
+          </p>
+          <div className="flex items-center gap-2">
+            {pagination.page > 1 ? (
+              <Link
+                href={previousHref}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Link>
+            ) : (
+              <span className="inline-flex h-9 cursor-not-allowed items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-sm font-medium text-muted-foreground opacity-60">
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </span>
+            )}
+            <span className="rounded-lg bg-ember-soft px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-ember">
+              Page {pagination.page} / {pagination.totalPages}
+            </span>
+            {pagination.page < pagination.totalPages ? (
+              <Link
+                href={nextHref}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <span className="inline-flex h-9 cursor-not-allowed items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-sm font-medium text-muted-foreground opacity-60">
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </span>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

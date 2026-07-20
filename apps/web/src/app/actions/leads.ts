@@ -2,9 +2,19 @@
 
 import { db } from "db";
 import { leads, campaigns, voiceSamples } from "db/schema";
-import { eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+
+const LEADS_PAGE_SIZE = 10;
+
+type GroqChatResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+};
 
 export async function getLeads() {
   const supabase = await createClient();
@@ -29,7 +39,50 @@ export async function getLeads() {
     .from(leads)
     .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
     .where(eq(campaigns.userId, user.id))
-    .orderBy(leads.createdAt);
+    .orderBy(desc(leads.createdAt));
+}
+
+export async function getPaginatedLeads(page = 1, pageSize = LEADS_PAGE_SIZE) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { leads: [], total: 0, page: 1, pageSize, totalPages: 1 };
+  }
+
+  const [countRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(leads)
+    .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
+    .where(eq(campaigns.userId, user.id));
+
+  const total = Number(countRow?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const offset = (currentPage - 1) * pageSize;
+
+  const rows = await db
+    .select({
+      id: leads.id,
+      title: leads.title,
+      content: leads.content,
+      url: leads.url,
+      author: leads.author,
+      aiRelevanceScore: leads.aiRelevanceScore,
+      status: leads.status,
+      createdAt: leads.createdAt,
+      campaignName: campaigns.name,
+    })
+    .from(leads)
+    .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
+    .where(eq(campaigns.userId, user.id))
+    .orderBy(desc(leads.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  return { leads: rows, total, page: currentPage, pageSize, totalPages };
 }
 
 export async function getCampaignLeadCount(campaignId: string) {
@@ -43,7 +96,7 @@ export async function getCampaignLeadCount(campaignId: string) {
   const [row] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(leads)
-    .where(eq(leads.campaignId, campaignId as any));
+    .where(eq(leads.campaignId, campaignId));
 
   return Number(row?.count ?? 0);
 }
@@ -92,9 +145,9 @@ export async function generateAIResponse(leadId: number) {
       },
     );
 
-    const data: any = await response.json();
+    const data = (await response.json()) as GroqChatResponse;
     return (
-      data.choices?.[0].message.content || "Failed to generate AI response."
+      data.choices?.[0]?.message?.content || "Failed to generate AI response."
     );
   } catch (err) {
     console.error("Groq error:", err);

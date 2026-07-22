@@ -20,7 +20,7 @@ export default function Sidebar({ name, avatarUrl }: { name: string; avatarUrl: 
   return (
     <aside className="w-64 flex-shrink-0 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col">
       <div className="h-16 px-5 flex items-center border-b border-sidebar-border">
-        <Brand href="/dashboard" />
+        <Brand href="/" />
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-0.5">

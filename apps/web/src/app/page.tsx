@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Radar, Zap, Target, Sparkles } from "lucide-react";
 import { Navbar } from "@/components/navbar";
+import { createClient } from "@/lib/supabase/server";
 
 const FEATURES = [
   { icon: Radar, title: "Real-time scanning", desc: "Monitor thousands of Reddit conversations across every subreddit that matters to you." },
@@ -15,10 +16,13 @@ const STEPS = [
   { n: "03", title: "You reply and close", body: "Review scored leads, use the AI draft or write your own, and land customers where they're already asking." },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
+      <Navbar user={user} />
 
       <main className="relative pt-36 pb-24 md:pt-48 md:pb-32 px-6 overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-grid opacity-40" aria-hidden />

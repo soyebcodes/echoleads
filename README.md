@@ -46,6 +46,13 @@
 | [Groq API](https://groq.com/) | AI inference (LLaMA 3 8B) |
 | [Supabase JS](https://supabase.com/docs/reference/javascript) | Database access from Worker |
 
+### `apps/python-api` — FastAPI Alternative Worker
+| Tool | Purpose |
+|------|---------|
+| [FastAPI](https://fastapi.tiangolo.com/) | Python web framework |
+| [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) | RSS feed parsing |
+| [psycopg2](https://pypi.org/project/psycopg2/) | PostgreSQL database driver |
+
 ### `packages/db` — Shared Database Package
 | Tool | Purpose |
 |------|---------|
@@ -59,6 +66,8 @@
 ```
 echoleads/
 ├── apps/
+│   ├── python-api/            # FastAPI service for alternative Reddit parsing & scoring
+│   │   └── main.py            # API logic and database interactions
 │   ├── web/                   # Next.js frontend (dashboard, auth, landing)
 │   │   └── src/
 │   │       ├── app/
@@ -84,6 +93,7 @@ echoleads/
 
 | Table | Description |
 |-------|-------------|
+| `profiles` | User profiles linked to Supabase Auth |
 | `campaigns` | A user's lead generation campaign with targeting config |
 | `keywords` | Positive & negative keywords linked to a campaign |
 | `voice_samples` | Sample post/reply pairs to train the AI's voice matching |
@@ -158,6 +168,16 @@ pnpm dev
 # → http://localhost:8787
 ```
 
+**Python API** (Alternative FastAPI Backend):
+```bash
+cd apps/python-api
+python -m venv .venv
+.venv\Scripts\Activate.ps1 # Or source .venv/bin/activate on Mac/Linux
+pip install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# → http://localhost:8000
+```
+
 ---
 
 ## ⚙️ How the Worker Works
@@ -200,6 +220,13 @@ wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 
 # Deploy
 pnpm deploy
+```
+
+### Deploy the Python API (e.g. Render / Railway)
+
+```bash
+# Deploys as a standard Python web service using uvicorn
+# Set DATABASE_URL in your hosting provider's environment variables
 ```
 
 ---

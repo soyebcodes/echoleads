@@ -13,7 +13,7 @@ const navLinks = [
   { name: "FAQ", href: "#faq" },
 ];
 
-export function Navbar() {
+export function Navbar({ user }: { user?: any }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -42,18 +42,29 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link
-            href="/login"
-            className="hidden lg:inline-flex text-sm font-medium text-muted-foreground hover:text-foreground px-3 py-2"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/signup"
-            className="hidden lg:inline-flex items-center rounded-lg bg-ember px-4 py-2 text-sm font-semibold text-ember-foreground shadow-ember transition-transform hover:-translate-y-0.5"
-          >
-            Get started
-          </Link>
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="hidden lg:inline-flex items-center rounded-lg bg-ember px-4 py-2 text-sm font-semibold text-ember-foreground shadow-ember transition-transform hover:-translate-y-0.5"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="hidden lg:inline-flex text-sm font-medium text-muted-foreground hover:text-foreground px-3 py-2"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/signup"
+                className="hidden lg:inline-flex items-center rounded-lg bg-ember px-4 py-2 text-sm font-semibold text-ember-foreground shadow-ember transition-transform hover:-translate-y-0.5"
+              >
+                Get started
+              </Link>
+            </>
+          )}
           <button onClick={() => setOpen((v) => !v)} className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground">
             {open ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -68,10 +79,18 @@ export function Navbar() {
                 {l.name}
               </Link>
             ))}
-            <Link href="/login" onClick={() => setOpen(false)} className="text-base font-medium text-foreground py-2">Sign in</Link>
-            <Link href="/signup" onClick={() => setOpen(false)} className="mt-2 inline-flex items-center justify-center rounded-lg bg-ember px-4 py-3 text-sm font-semibold text-ember-foreground shadow-ember">
-              Get started
-            </Link>
+            {user ? (
+              <Link href="/dashboard" onClick={() => setOpen(false)} className="mt-2 inline-flex items-center justify-center rounded-lg bg-ember px-4 py-3 text-sm font-semibold text-ember-foreground shadow-ember">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setOpen(false)} className="text-base font-medium text-foreground py-2">Sign in</Link>
+                <Link href="/signup" onClick={() => setOpen(false)} className="mt-2 inline-flex items-center justify-center rounded-lg bg-ember px-4 py-3 text-sm font-semibold text-ember-foreground shadow-ember">
+                  Get started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

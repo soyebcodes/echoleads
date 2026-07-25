@@ -221,3 +221,24 @@ export async function deleteLead(leadId: number) {
   await db.delete(leads).where(eq(leads.id, leadId));
   revalidatePath("/dashboard/leads");
 }
+
+export async function deleteLeadsByCampaign(campaignId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  // Verify the campaign belongs to this user before deleting
+  const [campaign] = await db
+    .select({ id: campaigns.id })
+    .from(campaigns)
+    .where(eq(campaigns.id, campaignId));
+
+  if (!campaign) throw new Error("Campaign not found");
+
+  await db.delete(leads).where(eq(leads.campaignId, campaignId));
+  revalidatePath(`/dashboard/campaigns/${campaignId}/leads`);
+  revalidatePath("/dashboard/leads");
+}

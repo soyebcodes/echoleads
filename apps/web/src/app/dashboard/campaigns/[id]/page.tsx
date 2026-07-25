@@ -160,7 +160,7 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
             </div>
             <h3 className="text-foreground font-bold mb-2">Campaign is Active</h3>
             <p className="text-muted-foreground text-sm mb-6">Our system is actively scanning Reddit for these keywords.</p>
-            <Link href="/dashboard/leads">
+            <Link href={`/dashboard/campaigns/${id}/leads`}>
                <Button className="w-full bg-ember text-ember-foreground shadow-ember hover:bg-ember/90 font-semibold">View Matches</Button>
             </Link>
           </div>

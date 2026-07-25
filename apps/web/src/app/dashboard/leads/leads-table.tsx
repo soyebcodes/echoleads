@@ -9,6 +9,16 @@ import {
 } from "@/app/actions/leads";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ExternalLink, Search, Trash2 } from "lucide-react";
 
@@ -41,6 +51,7 @@ export default function LeadsTable({
   const [generatingFor, setGeneratingFor] = useState<number | null>(null);
   const [draft, setDraft] = useState<{ [key: number]: string }>({});
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const firstLeadNumber = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1;
   const lastLeadNumber = Math.min(pagination.page * pagination.pageSize, pagination.total);
   const previousHref = pagination.page > 2 ? `/dashboard/leads?page=${pagination.page - 1}` : "/dashboard/leads";
@@ -64,8 +75,8 @@ export default function LeadsTable({
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Remove this lead?")) return;
     setDeletingId(id);
+    setConfirmDeleteId(null);
     await deleteLead(id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
     setDeletingId(null);
@@ -91,11 +102,30 @@ export default function LeadsTable({
 
   return (
     <div className="space-y-4">
+      <AlertDialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Remove Lead?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              This will permanently remove this lead from your inbox.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border text-foreground hover:bg-accent">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+            >
+              {deletingId ? "Removing…" : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {leads.length === 0 ? (
         <Card className="p-16 flex flex-col items-center justify-center text-center bg-card border-border shadow-soft relative overflow-hidden">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="relative z-10 flex flex-col items-center"
           >
@@ -184,7 +214,7 @@ export default function LeadsTable({
                   </span>
                   <button
                     type="button"
-                    onClick={() => handleDelete(lead.id)}
+                    onClick={() => setConfirmDeleteId(lead.id)}
                     disabled={deletingId === lead.id}
                     className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Remove lead"

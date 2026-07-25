@@ -85,6 +85,53 @@ export async function getPaginatedLeads(page = 1, pageSize = LEADS_PAGE_SIZE) {
   return { leads: rows, total, page: currentPage, pageSize, totalPages };
 }
 
+export async function getPaginatedLeadsByCampaign(
+  campaignId: string,
+  page = 1,
+  pageSize = LEADS_PAGE_SIZE,
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { leads: [], total: 0, page: 1, pageSize, totalPages: 1 };
+  }
+
+  const [countRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(leads)
+    .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
+    .where(eq(leads.campaignId, campaignId));
+
+  const total = Number(countRow?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const offset = (currentPage - 1) * pageSize;
+
+  const rows = await db
+    .select({
+      id: leads.id,
+      title: leads.title,
+      content: leads.content,
+      url: leads.url,
+      author: leads.author,
+      aiRelevanceScore: leads.aiRelevanceScore,
+      status: leads.status,
+      createdAt: leads.createdAt,
+      campaignName: campaigns.name,
+    })
+    .from(leads)
+    .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
+    .where(eq(leads.campaignId, campaignId))
+    .orderBy(desc(leads.createdAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  return { leads: rows, total, page: currentPage, pageSize, totalPages };
+}
+
 
 export async function getCampaignLeadCount(campaignId: string) {
   const supabase = await createClient();

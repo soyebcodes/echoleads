@@ -1,16 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { createCampaign } from "@/app/actions/campaigns";
+import { createCampaign, runCampaignNow } from "@/app/actions/campaigns";
+import { getCampaignLeadCount } from "@/app/actions/leads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const campaignSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -40,12 +49,34 @@ export default function CampaignWizard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
+  const [scanModalOpen, setScanModalOpen] = useState(false);
+  const [scanCampaignId, setScanCampaignId] = useState<string | null>(null);
+  const [scanCampaignName, setScanCampaignName] = useState<string | null>(null);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [findingMatches, setFindingMatches] = useState(false);
+  const [scanFoundResults, setScanFoundResults] = useState(false);
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+    };
+  }, []);
+
+  const stopPolling = () => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  };
+
   const {
     register,
     control,
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignSchema),
@@ -73,20 +104,75 @@ export default function CampaignWizard() {
     setIsSubmitting(true);
     try {
       const result = await createCampaign(data);
-      if (result.success) {
+      if (result.success && result.id) {
         toast.success("Campaign created successfully!");
-        router.push("/dashboard/campaigns");
+        const newCampaignId = result.id;
+        
+        // Start scanning automatically
+        setScanCampaignId(newCampaignId);
+        setScanCampaignName(data.name);
+        setScanModalOpen(true);
+        setScanProgress(8);
+        setFindingMatches(false);
+        setScanFoundResults(false);
+        setIsSubmitting(false);
+        
+        try {
+          await runCampaignNow(newCampaignId);
+          let attempts = 0;
+          stopPolling();
+          pollTimerRef.current = setInterval(async () => {
+            attempts += 1;
+            setScanProgress(Math.min(92, Math.round((attempts / 12) * 100)));
+            setFindingMatches(attempts >= 4);
+            const freshCount = await getCampaignLeadCount(newCampaignId);
+            
+            if (freshCount > 0) {
+              stopPolling();
+              setScanProgress(100);
+              setFindingMatches(false);
+              setScanFoundResults(true);
+              toast.success("Fresh leads are ready.");
+              return;
+            }
+            
+            if (attempts >= 12) {
+              stopPolling();
+              setScanProgress(100);
+              setFindingMatches(false);
+              setScanFoundResults(false);
+              toast.info("No leads found yet. You can open the campaign manually.");
+            }
+          }, 2000);
+        } catch (err) {
+          stopPolling();
+          setScanProgress(0);
+          setFindingMatches(false);
+          toast.error("Could not start scan.");
+        }
       } else {
         toast.error(result.error || "Failed to create campaign");
+        setIsSubmitting(false);
       }
     } catch (err) {
       toast.error("An unexpected error occurred");
-    } finally {
       setIsSubmitting(false);
     }
   };
 
-  const nextStep = () => setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
+  const nextStep = async () => {
+    const fieldsByStep: (keyof CampaignFormValues)[][] = [
+      ["name", "description", "leadType"],
+      ["keywords"],
+      ["timeFilterDays", "minLikes", "minComments", "targetDescription", "excludeDescription"],
+      ["voiceSamples"]
+    ];
+    
+    const isValid = await trigger(fieldsByStep[currentStep] as any);
+    if (isValid) {
+      setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
+    }
+  };
   const prevStep = () => setCurrentStep((s) => Math.max(s - 1, 0));
 
   const leadType = watch("leadType");
@@ -184,41 +270,46 @@ export default function CampaignWizard() {
                   </div>
                   <div className="space-y-3">
                     {keywordFields.map((field, index) => (
-                      <div key={field.id} className="flex gap-3 items-center group">
-                        <Input
-                          {...register(`keywords.${index}.phrase`)}
-                          placeholder="e.g. reddit lead software"
-                          className="bg-surface border-border text-foreground"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              if (index === keywordFields.length - 1) {
-                                appendKeyword({ phrase: "", isNegative: false });
+                      <div key={field.id} className="flex flex-col gap-1 w-full">
+                        <div className="flex gap-3 items-center group">
+                          <Input
+                            {...register(`keywords.${index}.phrase`)}
+                            placeholder="e.g. reddit lead software"
+                            className="bg-surface border-border text-foreground"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                if (index === keywordFields.length - 1) {
+                                  appendKeyword({ phrase: "", isNegative: false });
+                                }
                               }
-                            }
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setValue(`keywords.${index}.isNegative`, !watch(`keywords.${index}.isNegative`))}
-                          className={`px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${watch(`keywords.${index}.isNegative`)
-                              ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                              : "bg-green-500/20 text-green-400 border border-green-500/30"
-                            }`}
-                        >
-                          {watch(`keywords.${index}.isNegative`) ? "Negative" : "Positive"}
-                        </button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeKeyword(index)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </Button>
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setValue(`keywords.${index}.isNegative`, !watch(`keywords.${index}.isNegative`))}
+                            className={`px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${watch(`keywords.${index}.isNegative`)
+                                ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                                : "bg-green-500/20 text-green-400 border border-green-500/30"
+                              }`}
+                          >
+                            {watch(`keywords.${index}.isNegative`) ? "Negative" : "Positive"}
+                          </button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeKeyword(index)}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                          </Button>
+                        </div>
+                        {errors.keywords?.[index]?.phrase && (
+                          <p className="text-red-400 text-xs">{errors.keywords[index]?.phrase?.message}</p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -332,6 +423,9 @@ export default function CampaignWizard() {
                           rows={2}
                           className="w-full bg-transparent border-none text-foreground text-sm focus:ring-0 mt-1 resize-none"
                         />
+                        {errors.voiceSamples?.[index]?.samplePostContext && (
+                          <p className="text-red-400 text-xs mt-1">{errors.voiceSamples[index]?.samplePostContext?.message}</p>
+                        )}
                       </div>
                       <div className="pt-4 border-t border-border">
                         <Label className="text-muted-foreground text-xs uppercase tracking-wider font-bold">Your Reply</Label>
@@ -340,6 +434,9 @@ export default function CampaignWizard() {
                           rows={3}
                           className="w-full bg-transparent border-none text-ember text-sm focus:ring-0 mt-1 resize-none italic"
                         />
+                        {errors.voiceSamples?.[index]?.userReply && (
+                          <p className="text-red-400 text-xs mt-1">{errors.voiceSamples[index]?.userReply?.message}</p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -390,6 +487,95 @@ export default function CampaignWizard() {
       </Card>
 
       {/* Toast provider needed if not at root */}
+      <Dialog open={scanModalOpen} onOpenChange={(open) => {
+        if (!open) {
+           stopPolling();
+           router.push("/dashboard/campaigns");
+        }
+        setScanModalOpen(open);
+      }}>
+        <DialogContent className="sm:max-w-lg border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>Scanning for leads</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {scanCampaignName
+                ? `We’ve started a fresh scan for ${scanCampaignName}. If we find matching leads, you’ll be taken straight to your inbox.`
+                : "We’ve started a fresh scan. If we find matching leads, you’ll be taken straight to your inbox."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-xl border border-ember/20 bg-surface p-6 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Loader2
+                  className={`h-5 w-5 ${scanFoundResults ? "text-emerald-400" : "animate-spin text-ember"}`}
+                />
+                <div>
+                  <div className="text-sm font-medium text-foreground">
+                    {scanFoundResults
+                      ? "We found fresh lead matches."
+                      : findingMatches
+                        ? "Finding matches…"
+                        : "Looking through Reddit for high-intent posts..."}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {scanFoundResults
+                      ? "Your scan surfaced new opportunities. Open the inbox to review them now."
+                      : "This can take a little while. We’ll keep checking in the background and surface the results as soon as they appear."}
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-full border border-ember/20 bg-ember-soft px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-ember flex items-center gap-2 shrink-0">
+                <span
+                  className={`h-2 w-2 rounded-full ${scanFoundResults ? "bg-emerald-400" : "bg-ember animate-pulse"}`}
+                />
+                {scanFoundResults
+                  ? "Results ready"
+                  : findingMatches
+                    ? "Scanning live"
+                    : "In progress"}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <span>Progress</span>
+                <span>{scanProgress}%</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${scanFoundResults ? "bg-emerald-500" : "bg-ember"}`}
+                  style={{ width: `${scanProgress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="border-border text-foreground hover:bg-accent"
+                onClick={() => {
+                  stopPolling();
+                  router.push("/dashboard/campaigns");
+                }}
+              >
+                {scanFoundResults ? "Close" : "Go to Campaigns"}
+              </Button>
+              {scanFoundResults ? (
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-500"
+                  onClick={() => {
+                    stopPolling();
+                    router.push(`/dashboard/campaigns/${scanCampaignId}/leads`);
+                  }}
+                >
+                  View leads
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -13,6 +13,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Trash2, PlayCircle, Clock3, Loader2 } from "lucide-react";
 
@@ -36,6 +46,7 @@ export default function CampaignsList({
   const router = useRouter();
   const [campaigns, setCampaigns] = useState(initialCampaigns);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [runningId, setRunningId] = useState<string | null>(null);
   const [scanModalOpen, setScanModalOpen] = useState(false);
   const [scanCampaign, setScanCampaign] = useState<CampaignItem | null>(null);
@@ -147,8 +158,8 @@ export default function CampaignsList({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this campaign? This cannot be undone.")) return;
     setDeletingId(id);
+    setConfirmDeleteId(null);
     try {
       await deleteCampaign(id);
       setCampaigns((prev) => prev.filter((c) => c.id !== id));
@@ -214,6 +225,26 @@ export default function CampaignsList({
 
   return (
     <>
+      <AlertDialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Delete Campaign?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              This action cannot be undone. All leads associated with this campaign will also be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border text-foreground hover:bg-accent">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+            >
+              {deletingId ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={scanModalOpen} onOpenChange={setScanModalOpen}>
         <DialogContent className="sm:max-w-lg border-border bg-card">
           <DialogHeader>
@@ -282,7 +313,7 @@ export default function CampaignsList({
               {scanFoundResults ? (
                 <Button
                   className="bg-emerald-600 hover:bg-emerald-500"
-                  onClick={() => router.push("/dashboard/leads")}
+                  onClick={() => router.push(`/dashboard/campaigns/${scanCampaign?.id}/leads`)}
                 >
                   View leads
                 </Button>
@@ -296,7 +327,8 @@ export default function CampaignsList({
         {campaigns.map((campaign) => (
           <div
             key={campaign.id}
-            className="bg-card border border-border rounded-xl p-6 hover:border-ember/40 transition-all shadow-soft group"
+            onClick={() => router.push(`/dashboard/campaigns/${campaign.id}/leads`)}
+            className="bg-card border border-border rounded-xl p-6 hover:border-ember/40 transition-all shadow-soft group cursor-pointer"
           >
             <div className="flex justify-between items-start mb-4">
               <div>
@@ -318,7 +350,10 @@ export default function CampaignsList({
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() => handleRunNow(campaign.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRunNow(campaign.id);
+                    }}
                     disabled={runningId === campaign.id}
                     className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-ember-soft hover:text-ember disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Run scan now"
@@ -334,7 +369,10 @@ export default function CampaignsList({
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleDelete(campaign.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDeleteId(campaign.id);
+                  }}
                   disabled={deletingId === campaign.id}
                   className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-sidebar-muted transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label="Delete campaign"
@@ -390,6 +428,7 @@ export default function CampaignsList({
               <div className="flex justify-end">
                 <Link
                   href={`/dashboard/campaigns/${campaign.id}`}
+                  onClick={(e) => e.stopPropagation()}
                   className="text-xs text-ember font-medium hover:underline"
                 >
                   View Details →

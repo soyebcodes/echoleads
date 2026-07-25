@@ -85,6 +85,7 @@ export async function getPaginatedLeads(page = 1, pageSize = LEADS_PAGE_SIZE) {
   return { leads: rows, total, page: currentPage, pageSize, totalPages };
 }
 
+
 export async function getCampaignLeadCount(campaignId: string) {
   const supabase = await createClient();
   const {
@@ -138,14 +139,20 @@ export async function generateAIResponse(leadId: number) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama3-8b-8192",
+          model: "llama-3.1-8b-instant",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.7,
         }),
       },
     );
 
-    const data = (await response.json()) as GroqChatResponse;
+    const data = (await response.json()) as GroqChatResponse & { error?: any };
+    
+    if (!response.ok || data.error) {
+      console.error("Groq API error:", data.error || data);
+      return `Error generating response: ${data.error?.message || "Unknown error"}`;
+    }
+
     return (
       data.choices?.[0]?.message?.content || "Failed to generate AI response."
     );

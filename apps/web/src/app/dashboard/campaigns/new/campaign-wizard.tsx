@@ -189,6 +189,14 @@ export default function CampaignWizard() {
                           {...register(`keywords.${index}.phrase`)}
                           placeholder="e.g. reddit lead software"
                           className="bg-surface border-border text-foreground"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (index === keywordFields.length - 1) {
+                                appendKeyword({ phrase: "", isNegative: false });
+                              }
+                            }
+                          }}
                         />
                         <button
                           type="button"

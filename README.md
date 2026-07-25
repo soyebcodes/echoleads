@@ -1,18 +1,16 @@
 # EchoLeads
 
-**EchoLeads** is an AI-powered lead generation SaaS that automatically discovers high-intent leads from Reddit. It monitors subreddits on a schedule, scores posts using AI, and surfaces the most relevant prospects directly in your dashboard — so you can focus on closing, not searching.
+**EchoLeads** is an AI-powered lead generation SaaS that automatically discovers high-intent leads from Reddit. It monitors subreddits on a schedule, scores posts using AI, and surfaces the most relevant prospects directly in your dashboard.
 
 ---
 
 ## ✨ Features
 
-- 🎯 **Campaign-based Lead Generation** — Create campaigns with keywords, target audience descriptions, and filters to scope your lead search
-- 🤖 **AI Relevance Scoring** — Every Reddit post is scored 0–100 by Groq's LLaMA model based on how well it matches your campaign
-- 🔄 **Automated Cron Processing** — A Cloudflare Worker runs every 30 minutes to fetch, filter, and score new Reddit posts automatically
-- 🚫 **Negative Keyword Filtering** — Exclude irrelevant leads before they ever hit the AI, saving on API costs
-- 📊 **Lead Dashboard** — View all discovered leads with their AI scores, Reddit post details, and status tracking
-- 🔐 **Auth with Supabase** — Secure sign-up and login, with each user's campaigns and leads fully isolated
-- ⚙️ **Settings Page** — Manage your account and preferences
+- 🎯 **Campaign-based Lead Generation** — Create campaigns with keywords, target audience descriptions, and filters
+- 🤖 **AI Relevance Scoring** — Every Reddit post is scored based on how well it matches your campaign
+- 🔄 **Automated Processing** — A Cloudflare Worker runs on schedule to fetch, filter, and score new Reddit posts
+- 📊 **Lead Dashboard** — View all discovered leads with AI scores, Reddit post details, and status tracking
+- 🔐 **Auth with Supabase** — Secure sign-up and login with isolated user data
 
 ---
 
@@ -27,31 +25,25 @@
 ### `apps/web` — Next.js Frontend
 | Tool | Purpose |
 |------|---------|
-| [Next.js 16](https://nextjs.org/) | React framework (App Router) |
-| [React 19](https://react.dev/) | UI library |
-| [Tailwind CSS v4](https://tailwindcss.com/) | Utility-first styling |
-| [shadcn/ui](https://ui.shadcn.com/) | Component library (Radix UI primitives) |
+| [Next.js](https://nextjs.org/) | React framework (App Router) |
+| [React](https://react.dev/) | UI library |
+| [Tailwind CSS](https://tailwindcss.com/) | Utility-first styling |
 | [Framer Motion](https://www.framer.com/motion/) | Animations |
 | [Supabase SSR](https://supabase.com/docs/guides/auth/server-side) | Auth & database client |
 | [Drizzle ORM](https://orm.drizzle.team/) | Type-safe database queries |
 | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) | Form handling & validation |
 | [Sonner](https://sonner.emilkowal.ski/) | Toast notifications |
+| [Radix UI](https://www.radix-ui.com/) | Accessible UI components |
+| [Lucide React](https://lucide.dev/) | Icon library |
 
-### `apps/worker` — Cloudflare Worker (Background Engine)
+### `apps/worker` — Cloudflare Worker
 | Tool | Purpose |
 |------|---------|
 | [Cloudflare Workers](https://workers.cloudflare.com/) | Serverless edge runtime |
 | [Hono](https://hono.dev/) | Lightweight web framework |
 | [Wrangler](https://developers.cloudflare.com/workers/wrangler/) | Workers CLI & deployment |
-| [Groq API](https://groq.com/) | AI inference (LLaMA 3 8B) |
+| [Groq API](https://groq.com/) | AI inference |
 | [Supabase JS](https://supabase.com/docs/reference/javascript) | Database access from Worker |
-
-### `apps/python-api` — FastAPI Alternative Worker
-| Tool | Purpose |
-|------|---------|
-| [FastAPI](https://fastapi.tiangolo.com/) | Python web framework |
-| [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) | RSS feed parsing |
-| [psycopg2](https://pypi.org/project/psycopg2/) | PostgreSQL database driver |
 
 ### `packages/db` — Shared Database Package
 | Tool | Purpose |
@@ -66,8 +58,6 @@
 ```
 echoleads/
 ├── apps/
-│   ├── python-api/            # FastAPI service for alternative Reddit parsing & scoring
-│   │   └── main.py            # API logic and database interactions
 │   ├── web/                   # Next.js frontend (dashboard, auth, landing)
 │   │   └── src/
 │   │       ├── app/
@@ -83,21 +73,9 @@ echoleads/
 │
 └── packages/
     └── db/                    # Shared Drizzle schema & DB client
-        ├── schema.ts          # Table definitions: campaigns, keywords, leads, voiceSamples
+        ├── schema.ts          # Table definitions: campaigns, keywords, leads
         └── drizzle.config.ts  # Drizzle Kit config
 ```
-
----
-
-## 🗄️ Database Schema
-
-| Table | Description |
-|-------|-------------|
-| `profiles` | User profiles linked to Supabase Auth |
-| `campaigns` | A user's lead generation campaign with targeting config |
-| `keywords` | Positive & negative keywords linked to a campaign |
-| `voice_samples` | Sample post/reply pairs to train the AI's voice matching |
-| `leads` | Discovered Reddit posts with AI relevance scores & statuses |
 
 ---
 
@@ -148,8 +126,8 @@ GROQ_API_KEY=your-groq-api-key
 
 ```bash
 cd packages/db
-pnpm drizzle-kit generate
-pnpm drizzle-kit migrate
+pnpm db:generate
+pnpm db:push
 ```
 
 ### 5. Run the development servers
@@ -168,34 +146,24 @@ pnpm dev
 # → http://localhost:8787
 ```
 
-**Python API** (Alternative FastAPI Backend):
-```bash
-cd apps/python-api
-python -m venv .venv
-.venv\Scripts\Activate.ps1 # Or source .venv/bin/activate on Mac/Linux
-pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-# → http://localhost:8000
-```
-
 ---
 
 ## ⚙️ How the Worker Works
 
-The Cloudflare Worker (`apps/worker`) runs on a **cron schedule every 30 minutes**:
+The Cloudflare Worker (`apps/worker`) runs on a **cron schedule**:
 
 ```
-Cron Trigger (every 30 min)
+Cron Trigger
        ↓
 Fetch all active campaigns from Supabase
        ↓
 For each campaign:
-  ├── Fetch Reddit RSS feed (r/saas and relevant subreddits)
-  ├── Pre-filter posts by negative keywords (fast, free)
-  ├── Score remaining posts via Groq AI (LLaMA 3 8B)
-  │     → Prompt includes campaign name, description, and target customer
-  │     → Returns a score 0–100
-  └── Save posts with score ≥ 70 to the `leads` table in Supabase
+   ├── Fetch Reddit RSS feed
+   ├── Pre-filter posts by negative keywords
+   ├── Score remaining posts via Groq AI
+   │     → Prompt includes campaign name, description, and target customer
+   │     → Returns a score 0–100
+   └── Save posts with score ≥ threshold to the `leads` table in Supabase
 ```
 
 ---
@@ -220,13 +188,6 @@ wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 
 # Deploy
 pnpm deploy
-```
-
-### Deploy the Python API (e.g. Render / Railway)
-
-```bash
-# Deploys as a standard Python web service using uvicorn
-# Set DATABASE_URL in your hosting provider's environment variables
 ```
 
 ---

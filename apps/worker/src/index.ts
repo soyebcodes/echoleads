@@ -173,7 +173,17 @@ async function processLeads(env: Bindings, options?: { campaignId?: string }) {
         const content = item.content || "";
         const author = item.author?.name || "";
         const id = item.id || "";
-        const url = item.link?.["@_href"] || "";
+        const rawLink = item.link;
+        const href = Array.isArray(rawLink)
+          ? (rawLink.find((l: any) => l["@_rel"] === "alternate") || rawLink[0])?.[
+              "@_href"
+            ]
+          : rawLink?.["@_href"];
+        const url = href && href.startsWith("http")
+          ? href
+          : href
+            ? `https://www.reddit.com${href.startsWith("/") ? href : "/" + href}`
+            : "";
         const publishedAt = item.updated ? new Date(item.updated) : null;
 
         // Skip posts older than the campaign's time filter

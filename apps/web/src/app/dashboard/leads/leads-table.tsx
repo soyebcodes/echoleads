@@ -95,9 +95,21 @@ export default function LeadsTable({
       prev.map((l) => (l.id === id ? { ...l, status: "contacted" } : l)),
     );
 
-    const subject = "Following up from r/someone's post";
-    const url = `https://www.reddit.com/message/compose/?to=${username}&subject=${encodeURIComponent(subject)}&message=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    // Use Reddit's chat/DM compose URL – works more reliably than message/compose
+    const dmUrl = `https://www.reddit.com/message/compose/?to=u/${encodeURIComponent(username)}&subject=${encodeURIComponent("Quick question about your post")}&message=${encodeURIComponent(text)}`;
+    window.open(dmUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const normalizeRedditUrl = (url: string) => {
+    if (!url) return "https://www.reddit.com";
+    // Already a full URL
+    if (url.startsWith("http")) return url;
+    // Relative path from RSS feed
+    return `https://www.reddit.com${url.startsWith("/") ? url : "/" + url}`;
+  };
+
+  const buildDmUrl = (username: string, text: string) => {
+    return `https://www.reddit.com/message/compose/?to=u%2F${encodeURIComponent(username)}&subject=${encodeURIComponent("Quick question about your post")}&message=${encodeURIComponent(text)}`;
   };
 
   return (
@@ -224,8 +236,9 @@ export default function LeadsTable({
                   </button>
                 </div>
                 <a
-                  href={lead.url}
+                  href={normalizeRedditUrl(lead.url)}
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -249,14 +262,20 @@ export default function LeadsTable({
                   {draft[lead.id]}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    onClick={() =>
-                      handleSend(lead.id, lead.author, draft[lead.id])
-                    }
-                    className="bg-ember text-ember-foreground shadow-ember hover:bg-ember/90 h-9 px-4 text-xs"
+                  <a
+                    href={buildDmUrl(lead.author, draft[lead.id])}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => {
+                      markAsContacted(lead.id);
+                      setLeads((prev) =>
+                        prev.map((l) => (l.id === lead.id ? { ...l, status: "contacted" } : l))
+                      );
+                    }}
+                    className="inline-flex items-center justify-center rounded-md bg-ember text-ember-foreground shadow-ember hover:bg-ember/90 h-9 px-4 text-xs font-medium transition-colors"
                   >
                     Open Reddit DM
-                  </Button>
+                  </a>
                   <Button
                     variant="ghost"
                     onClick={() => handleGenerate(lead.id)}

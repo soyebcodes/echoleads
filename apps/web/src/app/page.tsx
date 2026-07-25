@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Radar, Zap, Target, Sparkles } from "lucide-react";
+import { ArrowRight, Radar, Zap, Target, Sparkles, Check } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,6 +14,39 @@ const STEPS = [
   { n: "01", title: "Describe your product", body: "Paste your site or write a sentence. We generate keywords, subreddits, and intent signals automatically." },
   { n: "02", title: "We watch Reddit for you", body: "Our scanner runs 24/7, filtering thousands of posts down to the ones that actually look like buyers." },
   { n: "03", title: "You reply and close", body: "Review scored leads, use the AI draft or write your own, and land customers where they're already asking." },
+];
+
+const PLANS = [
+  {
+    name: "Basic",
+    price: "৳49",
+    period: "/mo",
+    description: "Perfect for solo founders and side projects.",
+    features: ["1 campaign", "200 leads/mo", "Email alerts", "Basic intent scoring"],
+    cta: "Start free trial",
+    popular: false,
+    soon: false,
+  },
+  {
+    name: "Pro",
+    price: "৳99",
+    period: "/mo",
+    description: "For teams that want to scale their Reddit pipeline.",
+    features: ["Unlimited campaigns", "2,000 leads/mo", "Slack & webhook alerts", "Advanced intent scoring", "Team collaboration"],
+    cta: "Start free trial",
+    popular: true,
+    soon: false,
+  },
+  {
+    name: "Enterprise",
+    price: "Coming soon",
+    period: "",
+    description: "Custom workflows, volume, and dedicated support.",
+    features: ["Custom lead volume", "SSO & audit logs", "Dedicated account manager", "API access"],
+    cta: "Join waitlist",
+    popular: false,
+    soon: true,
+  },
 ];
 
 export default async function LandingPage() {
@@ -94,6 +127,59 @@ export default async function LandingPage() {
                 <p className="text-display text-3xl font-bold text-ember mb-3">{s.n}</p>
                 <h3 className="text-display text-lg font-semibold mb-2">{s.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{s.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="pricing" className="px-6 py-24 border-t border-border">
+        <div className="container mx-auto max-w-5xl">
+          <div className="text-center mb-14">
+            <p className="text-display text-xs font-semibold uppercase tracking-[0.2em] text-ember mb-3">Pricing</p>
+            <h2 className="text-display text-3xl md:text-4xl font-bold tracking-tight">Simple, transparent pricing</h2>
+            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">Start free for 14 days. No credit card required.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {PLANS.map((plan) => (
+              <div
+                key={plan.name}
+                className={`relative flex flex-col rounded-2xl border p-6 shadow-soft transition-transform hover:-translate-y-0.5 ${
+                  plan.popular ? "border-ember bg-ember/5" : "border-border bg-card"
+                }`}
+              >
+                {plan.popular && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-ember px-3 py-1 text-xs font-semibold text-ember-foreground">
+                    Most popular
+                  </span>
+                )}
+                <h3 className="text-display text-lg font-semibold">{plan.name}</h3>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-display text-4xl font-bold">{plan.price}</span>
+                  {plan.period && <span className="text-sm text-muted-foreground">{plan.period}</span>}
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
+                <ul className="mt-6 flex-1 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                        <Check className="h-2.5 w-2.5" />
+                      </span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/signup"
+                  className={`mt-6 inline-flex h-11 items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-transform hover:-translate-y-0.5 ${
+                    plan.popular
+                      ? "bg-ember text-ember-foreground shadow-ember"
+                      : "border border-border bg-surface text-foreground hover:border-ember hover:text-ember"
+                  }`}
+                >
+                  {plan.cta} <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             ))}
           </div>

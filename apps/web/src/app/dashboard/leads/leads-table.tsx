@@ -96,7 +96,7 @@ export default function LeadsTable({
     );
 
     // Use Reddit's chat/DM compose URL – works more reliably than message/compose
-    const dmUrl = `https://www.reddit.com/message/compose/?to=u/${encodeURIComponent(username)}&subject=${encodeURIComponent("Quick question about your post")}&message=${encodeURIComponent(text)}`;
+    const dmUrl = `https://www.reddit.com/message/compose/?to=${encodeURIComponent(username)}&subject=${encodeURIComponent("Quick question about your post")}&message=${encodeURIComponent(text)}`;
     window.open(dmUrl, "_blank", "noopener,noreferrer");
   };
 
@@ -109,7 +109,7 @@ export default function LeadsTable({
   };
 
   const buildDmUrl = (username: string, text: string) => {
-    return `https://www.reddit.com/message/compose/?to=u%2F${encodeURIComponent(username)}&subject=${encodeURIComponent("Quick question about your post")}&message=${encodeURIComponent(text)}`;
+    return `https://www.reddit.com/message/compose/?to=${encodeURIComponent(username)}&subject=${encodeURIComponent("Quick question about your post")}&message=${encodeURIComponent(text)}`;
   };
 
   return (

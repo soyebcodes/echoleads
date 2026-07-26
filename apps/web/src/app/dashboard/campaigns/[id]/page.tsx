@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, MessageSquare, Key, Clock, ThumbsUp, MessageCircle } from "lucide-react";
+import { ArrowLeft, Target, MessageSquare, Key, Clock, ThumbsUp, MessageCircle, Pencil } from "lucide-react";
 
 export default async function CampaignDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,23 +19,31 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/campaigns">
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full">
-            <ArrowLeft className="w-5 h-5" />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/campaigns">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-display text-3xl font-bold tracking-tight">{campaign.name}</h1>
+              <Badge variant="outline" className="text-ember border-ember/30 uppercase bg-ember-soft tracking-widest text-[10px]">
+                {campaign.leadType}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground mt-1 flex items-center gap-2">
+              Created on {new Date(campaign.createdAt!).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+        <Link href={`/dashboard/campaigns/${id}/edit`}>
+          <Button variant="outline" className="border-border text-foreground hover:border-ember/50 hover:text-ember gap-2">
+            <Pencil className="w-4 h-4" />
+            Edit Campaign
           </Button>
         </Link>
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-display text-3xl font-bold tracking-tight">{campaign.name}</h1>
-            <Badge variant="outline" className="text-ember border-ember/30 uppercase bg-ember-soft tracking-widest text-[10px]">
-              {campaign.leadType}
-            </Badge>
-          </div>
-          <p className="text-muted-foreground mt-1 flex items-center gap-2">
-            Created on {new Date(campaign.createdAt!).toLocaleDateString()}
-          </p>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

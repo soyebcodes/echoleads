@@ -70,6 +70,9 @@ export default function CampaignsList({
     }
   };
 
+  const staleCheck = (lastRunAt?: string | Date | null) =>
+    lastRunAt ? Date.now() - new Date(lastRunAt).getTime() > 5 * 60 * 1000 : false;
+
   const handleRunNow = async (id: string) => {
     const campaign = campaigns.find((item) => item.id === id);
     setRunningId(id);
@@ -176,7 +179,7 @@ export default function CampaignsList({
     }
   };
 
-  const getStatusBadge = (status?: string | null) => {
+  const getStatusBadge = (status?: string | null, lastRunAt?: string | Date | null) => {
     if (!status) {
       return {
         label: "Not run",
@@ -185,6 +188,18 @@ export default function CampaignsList({
     }
 
     if (status === "running") {
+      // Treat as stale if running for more than 5 minutes
+      const isStale = lastRunAt
+        ? Date.now() - new Date(lastRunAt).getTime() > 5 * 60 * 1000
+        : false;
+
+      if (isStale) {
+        return {
+          label: "Stale",
+          className: "bg-muted text-muted-foreground border border-border",
+        };
+      }
+
       return {
         label: "Running",
         className: "bg-amber-500/15 text-amber-300 border border-amber-500/30",
@@ -342,9 +357,9 @@ export default function CampaignsList({
                 </h3>
                 <div className="mt-2 flex items-center gap-2">
                   <span
-                    className={`px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${getStatusBadge(campaign.lastRunStatus).className}`}
+                    className={`px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${getStatusBadge(campaign.lastRunStatus, campaign.lastRunAt).className}`}
                   >
-                    {getStatusBadge(campaign.lastRunStatus).label}
+                    {getStatusBadge(campaign.lastRunStatus, campaign.lastRunAt).label}
                   </span>
                   <span className="px-2 py-1 rounded-md bg-ember-soft text-ember text-[10px] font-bold uppercase tracking-wider">
                     {campaign.leadType}
@@ -359,14 +374,14 @@ export default function CampaignsList({
                       e.stopPropagation();
                       handleRunNow(campaign.id);
                     }}
-                    disabled={runningId === campaign.id || campaign.lastRunStatus === "running"}
+                    disabled={runningId === campaign.id || (campaign.lastRunStatus === "running" && !staleCheck(campaign.lastRunAt))}
                     className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-ember-soft hover:text-ember disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Run scan now"
                     title={campaign.lastRunStatus === "running" ? "Scan already in progress" : "Run scan now"}
                   >
                     <PlayCircle className="w-4 h-4" />
                   </button>
-                  {runningId === campaign.id || campaign.lastRunStatus === "running" ? (
+                  {runningId === campaign.id || (campaign.lastRunStatus === "running" && !staleCheck(campaign.lastRunAt)) ? (
                     <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-300 border border-amber-500/30">
                       Scan
                     </span>
@@ -421,7 +436,7 @@ export default function CampaignsList({
                 </div>
                 <div className="text-sm text-foreground">
                   {campaign.lastRunStatus
-                    ? `${getStatusBadge(campaign.lastRunStatus).label} • ${campaign.lastRunAt ? new Date(campaign.lastRunAt).toLocaleString() : "pending"}`
+                    ? `${getStatusBadge(campaign.lastRunStatus, campaign.lastRunAt).label} • ${campaign.lastRunAt ? new Date(campaign.lastRunAt).toLocaleString() : "pending"}`
                     : "No scan history yet"}
                   {campaign.lastRunError ? (
                     <div className="mt-1 text-xs text-rose-300">

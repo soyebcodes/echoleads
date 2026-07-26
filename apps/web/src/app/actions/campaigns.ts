@@ -256,3 +256,60 @@ export async function deleteCampaign(id: string) {
   revalidatePath("/dashboard/campaigns");
   revalidatePath("/dashboard");
 }
+
+export async function updateCampaign(id: string, data: any) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  try {
+    // 1. Update campaign core fields
+    await db
+      .update(campaigns)
+      .set({
+        name: data.name,
+        description: data.description,
+        leadType: data.leadType,
+        timeFilterDays: parseInt(data.timeFilterDays) || 7,
+        minLikes: parseInt(data.minLikes) || 0,
+        minComments: parseInt(data.minComments) || 0,
+        targetDescription: data.targetDescription,
+        excludeDescription: data.excludeDescription,
+      })
+      .where(and(eq(campaigns.id, id), eq(campaigns.userId, user.id)));
+
+    // 2. Replace keywords (delete + reinsert)
+    await db.delete(keywords).where(eq(keywords.campaignId, id));
+    if (data.keywords && data.keywords.length > 0) {
+      await db.insert(keywords).values(
+        data.keywords.map((kw: any) => ({
+          campaignId: id,
+          phrase: kw.phrase,
+          isNegative: kw.isNegative,
+        })),
+      );
+    }
+
+    // 3. Replace voice samples (delete + reinsert)
+    await db.delete(voiceSamples).where(eq(voiceSamples.campaignId, id));
+    if (data.voiceSamples && data.voiceSamples.length > 0) {
+      await db.insert(voiceSamples).values(
+        data.voiceSamples.map((vs: any) => ({
+          campaignId: id,
+          samplePostContext: vs.samplePostContext,
+          userReply: vs.userReply,
+        })),
+      );
+    }
+
+    revalidatePath("/dashboard/campaigns");
+    revalidatePath(`/dashboard/campaigns/${id}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating campaign:", error);
+    return { error: error.message };
+  }
+}

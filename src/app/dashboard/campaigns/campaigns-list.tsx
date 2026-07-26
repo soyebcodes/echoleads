@@ -124,7 +124,7 @@ export default function CampaignsList({
         if (statusResult.status === "success" || statusResult.status === "failed") {
           stopPolling();
           setCampaigns((prev) => prev.map((item) => item.id === id ? { ...item, lastRunStatus: statusResult.status } : item));
-          setScanProgress(90);
+          setScanProgress(100);
           setFindingMatches(false);
           setScanFoundResults(false);
           setScanComplete(true);
@@ -137,7 +137,7 @@ export default function CampaignsList({
         if (attempts >= 12) {
           stopPolling();
           setCampaigns((prev) => prev.map((item) => item.id === id ? { ...item, lastRunStatus: "success" } : item));
-          setScanProgress(90);
+          setScanProgress(100);
           setFindingMatches(false);
           setScanFoundResults(false);
           setScanComplete(true);
@@ -351,7 +351,7 @@ export default function CampaignsList({
                 >
                   View leads
                 </Button>
-              ) : scanComplete ? (
+              ) : scanComplete && (campaigns.find(c => c.id === scanCampaign?.id)?.leadCount ?? 0) > 0 ? (
                 <Button
                   className="bg-ember hover:bg-ember/90 text-ember-foreground"
                   onClick={() => router.push(`/dashboard/campaigns/${scanCampaign?.id}/leads`)}

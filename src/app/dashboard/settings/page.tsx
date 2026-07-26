@@ -11,9 +11,9 @@ export default async function SettingsPage() {
     : { data: null };
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-display text-3xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-display text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage your account and preferences.</p>
       </div>
 

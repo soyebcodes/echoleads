@@ -14,13 +14,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .maybeSingle();
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
+    <div className="flex min-h-screen md:h-screen bg-background text-foreground md:overflow-hidden">
       <Sidebar name={profile?.name || "there"} avatarUrl={profile?.avatar_url ?? null} />
       <div className="flex flex-1 flex-col min-w-0">
-        <header className="h-16 flex items-center justify-end gap-2 px-6 border-b border-border bg-background/80 backdrop-blur">
+        <header className="sticky top-0 z-30 h-16 flex items-center justify-end gap-2 border-b border-border bg-background/80 pl-16 pr-4 backdrop-blur md:static md:pl-6 md:pr-6">
           <ThemeToggle />
         </header>
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 md:overflow-y-auto">{children}</main>
       </div>
     </div>
   );

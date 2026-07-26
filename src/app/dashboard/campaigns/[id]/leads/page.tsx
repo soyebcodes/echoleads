@@ -27,16 +27,16 @@ export default async function CampaignLeadsPage({ params, searchParams }: Props)
   if (!campaign) notFound();
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Link href="/dashboard/campaigns">
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-display text-3xl font-bold tracking-tight mb-1">
+            <h1 className="text-display text-2xl sm:text-3xl font-bold tracking-tight mb-1">
               {campaign.name}
             </h1>
             <p className="text-sm text-muted-foreground">

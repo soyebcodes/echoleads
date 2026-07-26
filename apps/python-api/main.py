@@ -46,6 +46,25 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+def mark_campaign_run(cur, campaign_id: Optional[str], status: str, error: Optional[str] = None) -> None:
+    """Update a campaign's last run status in the database."""
+    if campaign_id is None:
+        return
+    try:
+        cur.execute(
+            """
+            UPDATE campaigns
+            SET last_run_at = NOW(),
+                last_run_status = %s,
+                last_run_error = %s
+            WHERE id = %s
+            """,
+            (status, error, campaign_id),
+        )
+    except Exception as exc:
+        print(f"Could not update run status for campaign {campaign_id}: {exc}")
+
+
 @app.post("/run")
 def run_scan(payload: RunRequest) -> dict:
     if not DATABASE_URL:
@@ -56,6 +75,10 @@ def run_scan(payload: RunRequest) -> dict:
     try:
         conn = psycopg2.connect(DATABASE_URL)
         cur = conn.cursor()
+
+        if payload.campaign_id:
+            mark_campaign_run(cur, payload.campaign_id, "running")
+            conn.commit()
 
         cur.execute(
             """
@@ -72,45 +95,61 @@ def run_scan(payload: RunRequest) -> dict:
         if not campaigns:
             return {"status": "ok", "message": "No campaigns found"}
 
+        results = []
         for campaign in campaigns:
             campaign_id, name, description, target_description, lead_type, time_filter_days = campaign
-            search_query = build_search_query(name, description, target_description, lead_type)
-            rss_url = f"https://www.reddit.com/search.rss?q={requests.utils.quote(search_query)}&sort=new&t=week"
+            campaign_error = None
 
             try:
-                response = requests.get(rss_url, timeout=20, headers={"User-Agent": "EchoLeadsBot/1.0"})
-                response.raise_for_status()
+                search_query = build_search_query(name, description, target_description, lead_type)
+                rss_url = f"https://www.reddit.com/search.rss?q={requests.utils.quote(search_query)}&sort=new&t=week"
+
+                try:
+                    response = requests.get(rss_url, timeout=20, headers={"User-Agent": "EchoLeadsBot/1.0"})
+                    response.raise_for_status()
+                except Exception as exc:
+                    campaign_error = f"Reddit fetch failed: {exc}"
+                    print(f"Reddit fetch failed for {name}: {exc}")
+                    mark_campaign_run(cur, campaign_id, "failed", campaign_error)
+                    conn.commit()
+                    results.append({"campaign_id": str(campaign_id), "status": "failed", "error": campaign_error})
+                    continue
+
+                soup = BeautifulSoup(response.text, "xml")
+                entries = soup.find_all("entry")
+                for entry in entries:
+                    title = clean_text(entry.title.get_text() if entry.title else "")
+                    content = clean_text(entry.content.get_text() if entry.content else "")
+                    author = clean_text(entry.author.find("name").get_text() if entry.author and entry.author.find("name") else "")
+                    url = entry.link.get("href", "") if entry.link else ""
+                    post_id = entry.id.get_text() if entry.id else ""
+
+                    if not title and not content:
+                        continue
+
+                    score = score_relevance(title, content, description, target_description)
+                    if score < 70:
+                        continue
+
+                    cur.execute(
+                        """
+                        INSERT INTO leads (campaign_id, reddit_post_id, title, content, url, author, ai_relevance_score, status)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (reddit_post_id) DO NOTHING
+                        """,
+                        (campaign_id, post_id, title, content, url, author, score, "new"),
+                    )
+
+                mark_campaign_run(cur, campaign_id, "success")
+                results.append({"campaign_id": str(campaign_id), "status": "success"})
             except Exception as exc:
-                print(f"Reddit fetch failed for {name}: {exc}")
-                continue
+                campaign_error = str(exc)
+                mark_campaign_run(cur, campaign_id, "failed", campaign_error)
+                results.append({"campaign_id": str(campaign_id), "status": "failed", "error": campaign_error})
 
-            soup = BeautifulSoup(response.text, "xml")
-            entries = soup.find_all("entry")
-            for entry in entries:
-                title = clean_text(entry.title.get_text() if entry.title else "")
-                content = clean_text(entry.content.get_text() if entry.content else "")
-                author = clean_text(entry.author.find("name").get_text() if entry.author and entry.author.find("name") else "")
-                url = entry.link.get("href", "") if entry.link else ""
-                post_id = entry.id.get_text() if entry.id else ""
+            conn.commit()
 
-                if not title and not content:
-                    continue
-
-                score = score_relevance(title, content, description, target_description)
-                if score < 70:
-                    continue
-
-                cur.execute(
-                    """
-                    INSERT INTO leads (campaign_id, reddit_post_id, title, content, url, author, ai_relevance_score, status)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (reddit_post_id) DO NOTHING
-                    """,
-                    (campaign_id, post_id, title, content, url, author, score, "new"),
-                )
-
-        conn.commit()
-        return {"status": "ok", "processed": len(campaigns)}
+        return {"status": "ok", "processed": len(campaigns), "results": results}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     finally:

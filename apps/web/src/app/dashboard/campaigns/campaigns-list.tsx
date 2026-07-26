@@ -354,14 +354,14 @@ export default function CampaignsList({
                       e.stopPropagation();
                       handleRunNow(campaign.id);
                     }}
-                    disabled={runningId === campaign.id}
+                    disabled={runningId === campaign.id || campaign.lastRunStatus === "running"}
                     className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-ember-soft hover:text-ember disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Run scan now"
-                    title="Run scan now"
+                    title={campaign.lastRunStatus === "running" ? "Scan already in progress" : "Run scan now"}
                   >
                     <PlayCircle className="w-4 h-4" />
                   </button>
-                  {runningId === campaign.id ? (
+                  {runningId === campaign.id || campaign.lastRunStatus === "running" ? (
                     <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-300 border border-amber-500/30">
                       Scan
                     </span>

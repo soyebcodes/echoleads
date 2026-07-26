@@ -84,8 +84,8 @@ export default function CampaignWizard() {
       leadType: "product",
       keywords: [{ phrase: "", isNegative: false }],
       voiceSamples: [{
-        samplePostContext: "Someone asking for a recommendation for a [your product/service category] on r/software.",
-        userReply: "Hey! I actually built [EchoLeads] for exactly this. It helps you [monitor reddit]. Happy to share more if you're interested!"
+        samplePostContext: "",
+        userReply: ""
       }],
     },
   });
@@ -213,7 +213,15 @@ export default function CampaignWizard() {
 
       <Card className="bg-card border-border shadow-soft overflow-hidden">
         <CardContent className="p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form 
+            onSubmit={handleSubmit(onSubmit)} 
+            className="space-y-8"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
+                e.preventDefault();
+              }
+            }}
+          >
             {/* Step 1: Basics */}
             {currentStep === 0 && (
               <div className="space-y-6">
@@ -421,7 +429,8 @@ export default function CampaignWizard() {
                         <textarea
                           {...register(`voiceSamples.${index}.samplePostContext`)}
                           rows={2}
-                          className="w-full bg-transparent border-none text-foreground text-sm focus:ring-0 mt-1 resize-none"
+                          placeholder="e.g. Someone asking for a recommendation for a [your product/service category] on r/software."
+                          className="w-full bg-transparent border-none text-foreground text-sm focus:ring-0 mt-1 resize-none placeholder:text-muted-foreground/50"
                         />
                         {errors.voiceSamples?.[index]?.samplePostContext && (
                           <p className="text-red-400 text-xs mt-1">{errors.voiceSamples[index]?.samplePostContext?.message}</p>
@@ -432,7 +441,8 @@ export default function CampaignWizard() {
                         <textarea
                           {...register(`voiceSamples.${index}.userReply`)}
                           rows={3}
-                          className="w-full bg-transparent border-none text-ember text-sm focus:ring-0 mt-1 resize-none italic"
+                          placeholder="e.g. Hey! I actually built [EchoLeads] for exactly this. It helps you [monitor reddit]. Happy to share more if you're interested!"
+                          className="w-full bg-transparent border-none text-ember text-sm focus:ring-0 mt-1 resize-none italic placeholder:text-muted-foreground/50"
                         />
                         {errors.voiceSamples?.[index]?.userReply && (
                           <p className="text-red-400 text-xs mt-1">{errors.voiceSamples[index]?.userReply?.message}</p>

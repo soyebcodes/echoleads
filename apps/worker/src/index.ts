@@ -168,6 +168,7 @@ async function processLeads(env: Bindings, options?: { campaignId?: string }) {
 
       let matchedPosts = 0;
 
+      const itemsToScore = [];
       for (const item of items) {
         const title = item.title || "";
         const content = item.content || "";
@@ -215,33 +216,43 @@ async function processLeads(env: Bindings, options?: { campaignId?: string }) {
           );
           if (!hasPositive) continue;
         }
+        
+        itemsToScore.push({ id, title, content, author, url });
+      }
 
-        matchedPosts++;
+      matchedPosts = itemsToScore.length;
 
-        // 4. AI Relevance Scoring (Groq)
-        const score = await getAIRelevanceScore(
-          env.GROQ_API_KEY,
-          campaign,
-          title,
-          content,
+      // 4. AI Relevance Scoring (Groq) in parallel batches
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < itemsToScore.length; i += BATCH_SIZE) {
+        const batch = itemsToScore.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (post) => {
+            const score = await getAIRelevanceScore(
+              env.GROQ_API_KEY,
+              campaign,
+              post.title,
+              post.content,
+            );
+
+            if (score >= 70) {
+              // 5. Save to leads
+              await supabase.from("leads").upsert(
+                {
+                  campaign_id: campaign.id,
+                  reddit_post_id: post.id,
+                  title: post.title,
+                  content: post.content,
+                  url: post.url,
+                  author: post.author,
+                  ai_relevance_score: score,
+                  status: "new",
+                },
+                { onConflict: "reddit_post_id" },
+              );
+            }
+          })
         );
-
-        if (score >= 70) {
-          // 5. Save to leads
-          await supabase.from("leads").upsert(
-            {
-              campaign_id: campaign.id,
-              reddit_post_id: id,
-              title,
-              content,
-              url,
-              author,
-              ai_relevance_score: score,
-              status: "new",
-            },
-            { onConflict: "reddit_post_id" },
-          );
-        }
       }
 
       await markRun("success");

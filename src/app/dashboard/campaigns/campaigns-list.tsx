@@ -38,6 +38,20 @@ type CampaignItem = {
   lastRunError?: string | null;
 };
 
+function friendlyError(error: string | null | undefined): string | null {
+  if (!error) return null;
+  const lower = error.toLowerCase();
+  if (lower.includes("429") || lower.includes("too many requests"))
+    return "Reddit is rate-limiting requests. Please try again in a few minutes.";
+  if (lower.includes("timeout") || lower.includes("timed out"))
+    return "The scan timed out. Please try again later.";
+  if (lower.includes("fetch failed") || lower.includes("connection"))
+    return "Couldn't reach Reddit. Please try again later.";
+  if (lower.includes("could not start"))
+    return "Couldn't start the scan. Please try again.";
+  return "Scan encountered an error. Please try again later.";
+}
+
 export default function CampaignsList({
   initialCampaigns,
 }: {
@@ -461,7 +475,7 @@ export default function CampaignsList({
                     : "No scan history yet"}
                   {campaign.lastRunError ? (
                     <div className="mt-1 text-xs text-rose-300">
-                      {campaign.lastRunError}
+                      {friendlyError(campaign.lastRunError)}
                     </div>
                   ) : null}
                 </div>

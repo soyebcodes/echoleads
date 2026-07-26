@@ -17,18 +17,18 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
   const negativeKeywords = campaign.keywords.filter(k => k.isNegative);
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Link href="/dashboard/campaigns">
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-display text-3xl font-bold tracking-tight">{campaign.name}</h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h1 className="text-display text-2xl sm:text-3xl font-bold tracking-tight">{campaign.name}</h1>
               <Badge variant="outline" className="text-ember border-ember/30 uppercase bg-ember-soft tracking-widest text-[10px]">
                 {campaign.leadType}
               </Badge>
@@ -46,7 +46,7 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         {/* Main Info Column */}
         <div className="md:col-span-2 space-y-8">
           
@@ -60,7 +60,7 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
                 <Label className="text-muted-foreground">Description</Label>
                 <p className="text-foreground mt-1">{campaign.description || "N/A"}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-surface p-4 rounded-lg border border-border">
                   <Label className="text-muted-foreground text-xs">Target Customer</Label>
                   <p className="text-foreground mt-1 text-sm">{campaign.targetDescription || "Anyone"}</p>

@@ -26,9 +26,9 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-display text-3xl font-bold tracking-tight">
+        <h1 className="text-display text-2xl sm:text-3xl font-bold tracking-tight">
           Welcome back, {profile?.name || "there"}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Here's what your Reddit scanner picked up.</p>
@@ -36,12 +36,12 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-card p-5 shadow-soft">
+          <div key={s.label} className="rounded-xl border border-border bg-card p-4 sm:p-5 shadow-soft">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{s.label}</p>
+              <p className="text-[11px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground">{s.label}</p>
               <s.icon className="h-4 w-4 text-ember" />
             </div>
-            <p className="text-display text-3xl font-bold tracking-tight">{s.value}</p>
+            <p className="text-display text-2xl sm:text-3xl font-bold tracking-tight">{s.value}</p>
             <p className="text-xs text-muted-foreground mt-1">{s.hint}</p>
           </div>
         ))}
@@ -77,9 +77,9 @@ export default async function DashboardPage() {
           {leads.length > 0 ? (
             <ul className="divide-y divide-border">
               {leads.slice(0, 5).map((lead) => (
-                <li key={lead.id} className="flex items-center justify-between gap-4 p-4 hover:bg-surface/50 transition-colors">
+                <li key={lead.id} className="flex items-start justify-between gap-3 p-4 hover:bg-surface/50 transition-colors">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{lead.title}</p>
+                    <p className="text-sm font-medium line-clamp-2 sm:truncate">{lead.title}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       From <span className="text-ember">{lead.campaignName}</span>
                     </p>

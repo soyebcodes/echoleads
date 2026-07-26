@@ -140,7 +140,7 @@ export default function EditCampaignForm({ campaign }: { campaign: CampaignData 
           </div>
           <div>
             <Label className="text-foreground mb-3 block">Campaign Type *</Label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(["product", "service"] as const).map((type) => (
                 <button
                   key={type}
@@ -210,7 +210,7 @@ export default function EditCampaignForm({ campaign }: { campaign: CampaignData 
           <h3 className="text-display text-lg font-medium">Targeting Filters</h3>
           <div>
             <Label className="text-foreground mb-3 block">Recency Filter</Label>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[{ label: "24h", value: "1" }, { label: "7 days", value: "7" }, { label: "30 days", value: "30" }, { label: "90 days", value: "90" }].map(({ label, value }) => {
                 const current = watch("timeFilterDays");
                 return (
@@ -224,7 +224,7 @@ export default function EditCampaignForm({ campaign }: { campaign: CampaignData 
               })}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <Label className="text-foreground">Min Likes</Label>
               <Input type="number" {...register("minLikes")} className="bg-surface border-border text-foreground mt-1.5" />

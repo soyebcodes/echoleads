@@ -194,12 +194,12 @@ export default function CampaignWizard() {
   return (
     <div className="space-y-8 pb-20">
       {/* Progress Bar */}
-      <div className="flex items-center justify-between mb-12">
+      <div className="flex items-center justify-between mb-12 px-1">
         {STEPS.map((step, i) => (
           <div key={step} className="flex-1 flex items-center">
             <div className="relative flex flex-col items-center">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${i <= currentStep
+                className={`w-8 h-8 sm:w-10 sm:h-10 text-sm rounded-full flex items-center justify-center border-2 transition-all ${i <= currentStep
                     ? "bg-ember border-ember text-ember-foreground"
                     : "border-border text-muted-foreground"
                   }`}
@@ -212,13 +212,13 @@ export default function CampaignWizard() {
                   i + 1
                 )}
               </div>
-              <span className={`absolute -bottom-7 text-xs font-medium whitespace-nowrap ${i <= currentStep ? "text-ember" : "text-muted-foreground"
+              <span className={`absolute -bottom-6 text-[10px] sm:text-xs font-medium whitespace-nowrap ${i <= currentStep ? "text-ember" : "text-muted-foreground"
                 }`}>
                 {step}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-4 ${i < currentStep ? "bg-ember" : "bg-border"
+              <div className={`flex-1 h-0.5 mx-2 sm:mx-4 ${i < currentStep ? "bg-ember" : "bg-border"
                 }`} />
             )}
           </div>
@@ -379,7 +379,7 @@ export default function CampaignWizard() {
                       })}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                       <Label className="text-foreground">Min Likes</Label>
                       <Input
@@ -478,7 +478,7 @@ export default function CampaignWizard() {
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex items-center justify-between pt-8 border-t border-border">
+            <div className="flex flex-col-reverse gap-3 pt-8 border-t border-border sm:flex-row sm:items-center sm:justify-between">
               <Button
                 type="button"
                 variant="ghost"

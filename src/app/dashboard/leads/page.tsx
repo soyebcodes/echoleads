@@ -13,9 +13,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   const result = await getPaginatedLeads(page);
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-display text-3xl font-bold tracking-tight mb-2">Leads Inbox</h1>
+        <h1 className="text-display text-2xl sm:text-3xl font-bold tracking-tight mb-2">Leads Inbox</h1>
         <p className="text-sm text-muted-foreground">High-intent Reddit posts matched to your campaigns.</p>
       </div>
 

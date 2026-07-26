@@ -134,7 +134,7 @@ export default function LeadsTable({
         </AlertDialogContent>
       </AlertDialog>
       {leads.length === 0 ? (
-        <Card className="p-16 flex flex-col items-center justify-center text-center bg-card border-border shadow-soft relative overflow-hidden">
+        <Card className="p-8 sm:p-16 flex flex-col items-center justify-center text-center bg-card border-border shadow-soft relative overflow-hidden">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -185,14 +185,14 @@ export default function LeadsTable({
         leads.map((lead) => (
           <div
             key={lead.id}
-            className="bg-card border border-border rounded-xl p-6 shadow-soft transition-all hover:border-ember/30"
+            className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-soft transition-all hover:border-ember/30"
           >
-            <div className="flex justify-between items-start gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-3 sm:gap-4 mb-4">
               <div className="min-w-0">
                 <span className="text-[10px] font-bold text-ember uppercase tracking-widest mb-1 block">
                   {lead.campaignName}
                 </span>
-                <h3 className="text-display text-lg font-semibold text-foreground mb-2 leading-snug">
+                <h3 className="text-display text-base sm:text-lg font-semibold text-foreground mb-2 leading-snug">
                   {lead.title}
                 </h3>
                 <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -213,7 +213,7 @@ export default function LeadsTable({
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex w-full flex-row-reverse items-center justify-end gap-3 sm:w-auto sm:flex-col sm:items-end sm:gap-2 sm:shrink-0">
                 <div className="flex items-center gap-2">
                   <span
                     className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${

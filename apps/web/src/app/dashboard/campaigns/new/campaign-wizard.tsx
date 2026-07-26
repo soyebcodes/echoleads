@@ -6,7 +6,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createCampaign, runCampaignNow } from "@/app/actions/campaigns";
-import { getCampaignLeadCount } from "@/app/actions/leads";
+import { getCampaignScanStatus } from "@/app/actions/leads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -125,14 +125,24 @@ export default function CampaignWizard() {
             attempts += 1;
             setScanProgress(Math.min(92, Math.round((attempts / 12) * 100)));
             setFindingMatches(attempts >= 4);
-            const freshCount = await getCampaignLeadCount(newCampaignId);
+            const statusResult = await getCampaignScanStatus(newCampaignId);
             
-            if (freshCount > 0) {
+            if (statusResult.leadCount > 0) {
               stopPolling();
               setScanProgress(100);
               setFindingMatches(false);
               setScanFoundResults(true);
               toast.success("Fresh leads are ready.");
+              return;
+            }
+            
+            // Stop early if worker finished but found no leads
+            if (statusResult.status === "success" || statusResult.status === "failed") {
+              stopPolling();
+              setScanProgress(100);
+              setFindingMatches(false);
+              setScanFoundResults(false);
+              toast.info(statusResult.status === "failed" ? "Scan failed. Please try again later." : "No matching leads found right now.");
               return;
             }
             

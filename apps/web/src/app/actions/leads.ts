@@ -242,3 +242,29 @@ export async function deleteLeadsByCampaign(campaignId: string) {
   revalidatePath(`/dashboard/campaigns/${campaignId}/leads`);
   revalidatePath("/dashboard/leads");
 }
+
+export async function getCampaignScanStatus(campaignId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { leadCount: 0, status: "idle" as string | null };
+
+  const [campaign] = await db
+    .select({ 
+      lastRunStatus: campaigns.lastRunStatus 
+    })
+    .from(campaigns)
+    .where(eq(campaigns.id, campaignId));
+
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .where(eq(leads.campaignId, campaignId));
+
+  return {
+    leadCount: Number(result?.count) || 0,
+    status: campaign?.lastRunStatus || "idle",
+  };
+}

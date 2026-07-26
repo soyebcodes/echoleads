@@ -34,7 +34,7 @@ app.post("/run", async (c) => {
     `[Worker] Manual trigger received for campaign: ${campaignId ?? "all campaigns"}`,
   );
 
-  await processLeads(env, { campaignId });
+  c.executionCtx.waitUntil(processLeads(env, { campaignId }));
   return c.json({ ok: true, campaignId: campaignId ?? null });
 });
 
@@ -209,11 +209,11 @@ async function processLeads(env: Bindings, options?: { campaignId?: string }) {
           .map((k: any) => k.phrase.toLowerCase());
 
         if (campaignPositiveKeywords.length > 0) {
-          const hasPositive = campaignPositiveKeywords.some(
-            (kw: string) =>
-              title.toLowerCase().includes(kw) ||
-              content.toLowerCase().includes(kw),
-          );
+          const hasPositive = campaignPositiveKeywords.some((kw: string) => {
+            const words = kw.toLowerCase().split(/\s+/).filter(Boolean);
+            const fullText = (title + " " + content).toLowerCase();
+            return words.every((word) => fullText.includes(word));
+          });
           if (!hasPositive) continue;
         }
         
@@ -314,7 +314,7 @@ function buildSearchQuery(campaign: any, positiveKeywords: string[]) {
     return "saas";
   }
 
-  return terms.map((term) => `"${term.replace(/"/g, "")}"`).join(" OR ");
+  return terms.map((term) => `(${term.replace(/[()]/g, "")})`).join(" OR ");
 }
 
 async function fetchRedditFeed(rssUrl: string, campaignName: string) {

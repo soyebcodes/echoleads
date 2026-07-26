@@ -30,7 +30,7 @@ export default async function CampaignLeadsPage({ params, searchParams }: Props)
     <div className="p-6 md:p-8 space-y-8">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link href={"/dashboard/campaigns/" + id}>
+          <Link href="/dashboard/campaigns">
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>

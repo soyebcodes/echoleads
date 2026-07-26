@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deleteCampaign, runCampaignNow } from "@/app/actions/campaigns";
-import { getCampaignLeadCount } from "@/app/actions/leads";
+import { getCampaignScanStatus } from "@/app/actions/leads";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -101,31 +101,36 @@ export default function CampaignsList({
         attempts += 1;
         setScanProgress(Math.min(92, Math.round((attempts / 12) * 100)));
         setFindingMatches(attempts >= 4);
-        const freshCount = await getCampaignLeadCount(id);
 
-        if (freshCount > initialLeadCount) {
+        const statusResult = await getCampaignScanStatus(id);
+
+        if (statusResult.leadCount > initialLeadCount) {
           stopPolling();
+          setCampaigns((prev) => prev.map((item) => item.id === id ? { ...item, lastRunStatus: "success", leadCount: statusResult.leadCount } : item));
           setScanProgress(100);
           setFindingMatches(false);
           setScanFoundResults(true);
           toast.success("Fresh leads are ready.");
+          router.refresh();
+          return;
+        }
+
+        // Stop early if worker finished but found no new leads
+        if (statusResult.status === "success" || statusResult.status === "failed") {
+          stopPolling();
+          setCampaigns((prev) => prev.map((item) => item.id === id ? { ...item, lastRunStatus: statusResult.status } : item));
+          setScanProgress(100);
+          setFindingMatches(false);
+          setScanFoundResults(false);
+          toast.info(statusResult.status === "failed" ? "Scan failed. Please try again later." : "No new matching leads found right now.");
+          setRunningId(null);
+          router.refresh();
           return;
         }
 
         if (attempts >= 12) {
           stopPolling();
-          setCampaigns((prev) =>
-            prev.map((item) =>
-              item.id === id
-                ? {
-                    ...item,
-                    lastRunStatus: "success",
-                    lastRunError: "No new leads were found yet.",
-                  }
-                : item,
-            ),
-          );
-          setScanProgress(100);
+          setCampaigns((prev) => prev.map((item) => item.id === id ? { ...item, lastRunStatus: "success" } : item));
           setFindingMatches(false);
           setScanFoundResults(false);
           setScanModalOpen(false);

@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Trash2, PlayCircle, Clock3, Loader2 } from "lucide-react";
+import { Trash2, PlayCircle, Clock3, Loader2, CheckCircle2, SearchX } from "lucide-react";
 
 type CampaignItem = {
   id: string;
@@ -53,6 +53,7 @@ export default function CampaignsList({
   const [scanProgress, setScanProgress] = useState(0);
   const [findingMatches, setFindingMatches] = useState(false);
   const [scanFoundResults, setScanFoundResults] = useState(false);
+  const [scanComplete, setScanComplete] = useState(false);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function CampaignsList({
     setScanProgress(8);
     setFindingMatches(false);
     setScanFoundResults(false);
+    setScanComplete(false);
     setCampaigns((prev) =>
       prev.map((item) =>
         item.id === id
@@ -118,13 +120,14 @@ export default function CampaignsList({
           return;
         }
 
-        // Stop early if worker finished but found no new leads
+        // Stop early if scan finished but found no new leads
         if (statusResult.status === "success" || statusResult.status === "failed") {
           stopPolling();
           setCampaigns((prev) => prev.map((item) => item.id === id ? { ...item, lastRunStatus: statusResult.status } : item));
-          setScanProgress(100);
+          setScanProgress(90);
           setFindingMatches(false);
           setScanFoundResults(false);
+          setScanComplete(true);
           toast.info(statusResult.status === "failed" ? "Scan failed. Please try again later." : "No new matching leads found right now.");
           setRunningId(null);
           router.refresh();
@@ -134,9 +137,10 @@ export default function CampaignsList({
         if (attempts >= 12) {
           stopPolling();
           setCampaigns((prev) => prev.map((item) => item.id === id ? { ...item, lastRunStatus: "success" } : item));
+          setScanProgress(90);
           setFindingMatches(false);
           setScanFoundResults(false);
-          setScanModalOpen(false);
+          setScanComplete(true);
           toast.info(
             "No new leads were found yet. You can open the inbox manually.",
           );
@@ -279,33 +283,43 @@ export default function CampaignsList({
           <div className="rounded-xl border border-ember/20 bg-surface p-6 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <Loader2
-                  className={`h-5 w-5 ${scanFoundResults ? "text-emerald-400" : "animate-spin text-ember"}`}
-                />
+                {scanFoundResults ? (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                ) : scanComplete ? (
+                  <SearchX className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <Loader2 className="h-5 w-5 animate-spin text-ember" />
+                )}
                 <div>
                   <div className="text-sm font-medium text-foreground">
                     {scanFoundResults
                       ? "We found fresh lead matches."
-                      : findingMatches
-                        ? "Finding matches…"
-                        : "Looking through Reddit for high-intent posts..."}
+                      : scanComplete
+                        ? "Scan complete."
+                        : findingMatches
+                          ? "Finding matches…"
+                          : "Looking through Reddit for high-intent posts..."}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {scanFoundResults
                       ? "Your scan surfaced new opportunities. Open the inbox to review them now."
-                      : "This can take a little while. We’ll keep checking in the background and surface the results as soon as they appear."}
+                      : scanComplete
+                        ? "We finished scanning but didn't find new matching leads right now. Try again later or adjust your keywords."
+                        : "This can take a little while. We’ll keep checking in the background and surface the results as soon as they appear."}
                   </div>
                 </div>
               </div>
               <div className="rounded-full border border-ember/20 bg-ember-soft px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-ember flex items-center gap-2 shrink-0">
                 <span
-                  className={`h-2 w-2 rounded-full ${scanFoundResults ? "bg-emerald-400" : "bg-ember animate-pulse"}`}
+                  className={`h-2 w-2 rounded-full ${scanFoundResults ? "bg-emerald-400" : scanComplete ? "bg-muted-foreground" : "bg-ember animate-pulse"}`}
                 />
                 {scanFoundResults
                   ? "Results ready"
-                  : findingMatches
-                    ? "Scanning live"
-                    : "In progress"}
+                  : scanComplete
+                    ? "Complete"
+                    : findingMatches
+                      ? "Scanning live"
+                      : "In progress"}
               </div>
             </div>
 
@@ -316,7 +330,7 @@ export default function CampaignsList({
               </div>
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${scanFoundResults ? "bg-emerald-500" : "bg-ember"}`}
+                  className={`h-full rounded-full transition-all duration-500 ${scanFoundResults ? "bg-emerald-500" : scanComplete ? "bg-muted-foreground" : "bg-ember"}`}
                   style={{ width: `${scanProgress}%` }}
                 />
               </div>
@@ -328,7 +342,7 @@ export default function CampaignsList({
                 className="border-border text-foreground hover:bg-accent"
                 onClick={() => setScanModalOpen(false)}
               >
-                {scanFoundResults ? "Close" : "Keep browsing"}
+                {scanFoundResults || scanComplete ? "Close" : "Keep browsing"}
               </Button>
               {scanFoundResults ? (
                 <Button
@@ -336,6 +350,13 @@ export default function CampaignsList({
                   onClick={() => router.push(`/dashboard/campaigns/${scanCampaign?.id}/leads`)}
                 >
                   View leads
+                </Button>
+              ) : scanComplete ? (
+                <Button
+                  className="bg-ember hover:bg-ember/90 text-ember-foreground"
+                  onClick={() => router.push(`/dashboard/campaigns/${scanCampaign?.id}/leads`)}
+                >
+                  View inbox
                 </Button>
               ) : null}
             </div>

@@ -98,7 +98,7 @@ export default async function DashboardPage() {
             </ul>
           ) : (
             <div className="p-10 text-center text-sm text-muted-foreground">
-              No leads found yet. Your worker is scanning…
+              No leads found yet. Your scanner is running…
             </div>
           )}
         </div>

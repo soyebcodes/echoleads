@@ -1,7 +1,7 @@
 "use server";
 
-import { db } from "db";
-import { leads, campaigns, voiceSamples } from "db/schema";
+import { db } from "@/lib/db";
+import { leads, campaigns, voiceSamples } from "@/lib/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";

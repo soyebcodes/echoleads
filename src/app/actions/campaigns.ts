@@ -1,7 +1,7 @@
 "use server";
 
-import { db } from "db";
-import { campaigns, keywords, voiceSamples } from "db/schema";
+import { db } from "@/lib/db";
+import { campaigns, keywords, voiceSamples } from "@/lib/db/schema";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -13,62 +13,31 @@ async function triggerScanRun(campaignId: string) {
   const pythonApiUrl =
     process.env.PYTHON_API_URL || process.env.PYTHON_BACKEND_URL;
 
-  if (pythonApiUrl) {
-    try {
-      const response = await fetch(`${pythonApiUrl.replace(/\/$/, "")}/run`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ campaign_id: campaignId }),
-      });
-
-      if (!response.ok) {
-        console.error(
-          `Failed to trigger Python API run for campaign ${campaignId}:`,
-          response.status,
-        );
-      }
-      return;
-    } catch (error) {
-      console.error(
-        `Error triggering Python API run for campaign ${campaignId}:`,
-        error,
-      );
-    }
-  }
-
-  const workerUrl =
-    process.env.WORKER_TRIGGER_URL ||
-    process.env.CLOUDFLARE_WORKER_URL ||
-    process.env.WORKER_URL;
-
-  if (!workerUrl) {
-    console.warn("No worker trigger URL configured; skipping immediate run.");
+  if (!pythonApiUrl) {
+    console.warn(
+      "No Python API URL configured; skipping immediate run.",
+    );
     return;
   }
 
   try {
-    const response = await fetch(workerUrl, {
+    const response = await fetch(`${pythonApiUrl.replace(/\/$/, "")}/run`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.WORKER_API_KEY
-          ? { "x-worker-token": process.env.WORKER_API_KEY }
-          : {}),
       },
-      body: JSON.stringify({ campaignId }),
+      body: JSON.stringify({ campaign_id: campaignId }),
     });
 
     if (!response.ok) {
       console.error(
-        `Failed to trigger worker run for campaign ${campaignId}:`,
+        `Failed to trigger Python API run for campaign ${campaignId}:`,
         response.status,
       );
     }
   } catch (error) {
     console.error(
-      `Error triggering worker run for campaign ${campaignId}:`,
+      `Error triggering Python API run for campaign ${campaignId}:`,
       error,
     );
   }

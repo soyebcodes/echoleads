@@ -6,15 +6,12 @@ jspm_packages/
 .kilo
 
 # Next.js build output
-apps/web/.next/
-apps/web/out/
+.next/
+out/
+next-env.d.ts
 
-# Cloudflare Wrangler build output
-apps/worker/.wrangler/
-apps/worker/dist/
-
-# Drizzle ORM
-packages/db/drizzle/
+# Drizzle ORM migrations
+drizzle/
 
 # Build artifacts
 dist/

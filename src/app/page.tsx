@@ -203,8 +203,14 @@ export default async function LandingPage() {
         <div className="container mx-auto max-w-5xl flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} EchoLeads. Built for founders who close.</p>
           <div className="flex items-center gap-6">
-            <Link href="/login" className="hover:text-foreground">Sign in</Link>
-            <Link href="/signup" className="hover:text-foreground">Sign up</Link>
+            {user ? (
+              <Link href="/dashboard" className="hover:text-foreground">Dashboard</Link>
+            ) : (
+              <>
+                <Link href="/login" className="hover:text-foreground">Sign in</Link>
+                <Link href="/signup" className="hover:text-foreground">Sign up</Link>
+              </>
+            )}
           </div>
         </div>
       </footer>

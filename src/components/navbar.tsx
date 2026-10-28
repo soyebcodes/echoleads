@@ -12,7 +12,7 @@ const navLinks = [
   { name: "Pricing", href: "#pricing" },
 ];
 
-export function Navbar({ user }: { user?: any }) {
+export function Navbar({ user }: { user?: { id: string; email?: string } | null }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 

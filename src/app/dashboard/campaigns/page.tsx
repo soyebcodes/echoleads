@@ -11,7 +11,7 @@ export default async function CampaignsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-display text-2xl sm:text-3xl font-bold tracking-tight mb-2">Campaigns</h1>
-          <p className="text-sm text-muted-foreground">Manage your Reddit monitoring campaigns.</p>
+          <p className="text-sm text-muted-foreground">Manage your multi-platform lead monitoring campaigns.</p>
         </div>
         <Link href="/dashboard/campaigns/new" className="w-full sm:w-auto">
           <Button className="w-full sm:w-auto bg-ember text-ember-foreground shadow-ember hover:bg-ember/90">
@@ -23,7 +23,7 @@ export default async function CampaignsPage() {
         </Link>
       </div>
 
-      <CampaignsList initialCampaigns={campaigns as any[]} />
+      <CampaignsList initialCampaigns={campaigns} />
     </div>
   );
 }

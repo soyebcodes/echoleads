@@ -1,4 +1,7 @@
 import { getCampaignById } from "@/app/actions/campaigns";
+import { getBillingOverview } from "@/app/actions/billing";
+import { getPlan } from "@/lib/billing/plans";
+import { isXAvailableForScanning } from "@/lib/scanner-config";
 import { notFound } from "next/navigation";
 import EditCampaignForm from "./edit-campaign-form";
 import Link from "next/link";
@@ -9,9 +12,14 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function EditCampaignPage({ params }: Props) {
   const { id } = await params;
-  const campaign = await getCampaignById(id);
+  const [campaign, billing] = await Promise.all([
+    getCampaignById(id),
+    getBillingOverview(),
+  ]);
 
   if (!campaign) notFound();
+
+  const plan = getPlan(billing?.planId ?? "free");
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8 pb-20">
@@ -26,7 +34,11 @@ export default async function EditCampaignPage({ params }: Props) {
           <p className="text-sm text-muted-foreground">{campaign.name}</p>
         </div>
       </div>
-      <EditCampaignForm campaign={campaign} />
+      <EditCampaignForm
+        campaign={campaign}
+        allowedPlatforms={plan.platforms}
+        xConfigured={isXAvailableForScanning()}
+      />
     </div>
   );
 }

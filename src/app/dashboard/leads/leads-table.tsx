@@ -20,15 +20,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, ExternalLink, Search, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Search, Trash2, Download } from "lucide-react";
 
 type LeadItem = {
   id: number;
+  platform: string;
   title: string;
   content: string | null;
   url: string;
   author: string;
   aiRelevanceScore: number | null;
+  aiScoreReason?: string | null;
   status: string | null;
   campaignName: string;
 };
@@ -40,12 +42,54 @@ type Pagination = {
   totalPages: number;
 };
 
+const PLATFORM_META: Record<string, { label: string; badge: string; viewLabel: string }> = {
+  reddit: {
+    label: "Reddit",
+    badge: "bg-orange-500/10 text-orange-400 border border-orange-500/30",
+    viewLabel: "View on Reddit",
+  },
+  x: {
+    label: "X",
+    badge: "bg-sky-500/10 text-sky-400 border border-sky-500/30",
+    viewLabel: "View on X",
+  },
+  hacker_news: {
+    label: "Hacker News",
+    badge: "bg-yellow-500/10 text-yellow-500 dark:text-yellow-400 border border-yellow-500/30",
+    viewLabel: "View on Hacker News",
+  },
+};
+
+function platformMeta(platform: string) {
+  return PLATFORM_META[platform] ?? {
+    label: platform,
+    badge: "bg-muted text-muted-foreground border border-border",
+    viewLabel: "View post",
+  };
+}
+
+function authorLabel(platform: string, author: string): string {
+  if (platform === "reddit") return `u/${author}`;
+  if (platform === "x") return `@${author}`;
+  return author;
+}
+
+function normalizeUrl(lead: LeadItem): string {
+  if (!lead.url) return "https://www.reddit.com";
+  if (lead.url.startsWith("http")) return lead.url;
+  return `https://www.reddit.com${lead.url.startsWith("/") ? lead.url : "/" + lead.url}`;
+}
+
 export default function LeadsTable({
   initialLeads,
   pagination,
+  campaignId,
+  basePath = "/dashboard/leads",
 }: {
   initialLeads: LeadItem[];
   pagination: Pagination;
+  campaignId?: string;
+  basePath?: string;
 }) {
   const [leads, setLeads] = useState(initialLeads);
   const [generatingFor, setGeneratingFor] = useState<number | null>(null);
@@ -54,8 +98,11 @@ export default function LeadsTable({
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const firstLeadNumber = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1;
   const lastLeadNumber = Math.min(pagination.page * pagination.pageSize, pagination.total);
-  const previousHref = pagination.page > 2 ? `/dashboard/leads?page=${pagination.page - 1}` : "/dashboard/leads";
-  const nextHref = `/dashboard/leads?page=${pagination.page + 1}`;
+  const previousHref = pagination.page > 2 ? `${basePath}?page=${pagination.page - 1}` : basePath;
+  const nextHref = `${basePath}?page=${pagination.page + 1}`;
+  const exportHref = campaignId
+    ? `/api/leads/export?campaign_id=${campaignId}`
+    : "/api/leads/export";
 
   const sanitizeContent = (value?: string | null) => {
     if (!value) return "No excerpt available yet.";
@@ -89,31 +136,39 @@ export default function LeadsTable({
     setGeneratingFor(null);
   };
 
-  const handleSend = (id: number, username: string, text: string) => {
-    markAsContacted(id);
+  const handleSend = (lead: LeadItem, text: string) => {
+    markAsContacted(lead.id);
     setLeads((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, status: "contacted" } : l)),
+      prev.map((l) => (l.id === lead.id ? { ...l, status: "contacted" } : l)),
     );
 
-    // Use Reddit's chat/DM compose URL – works more reliably than message/compose
-    const dmUrl = `https://www.reddit.com/message/compose/?to=${encodeURIComponent(username)}&subject=${encodeURIComponent("Quick question about your post")}&message=${encodeURIComponent(text)}`;
+    const dmUrl =
+      lead.platform === "reddit"
+        ? `https://www.reddit.com/message/compose/?to=${encodeURIComponent(lead.author)}&subject=${encodeURIComponent("Quick question about your post")}&message=${encodeURIComponent(text)}`
+        : normalizeUrl(lead);
     window.open(dmUrl, "_blank", "noopener,noreferrer");
   };
 
-  const normalizeRedditUrl = (url: string) => {
-    if (!url) return "https://www.reddit.com";
-    // Already a full URL
-    if (url.startsWith("http")) return url;
-    // Relative path from RSS feed
-    return `https://www.reddit.com${url.startsWith("/") ? url : "/" + url}`;
-  };
-
-  const buildDmUrl = (username: string, text: string) => {
-    return `https://www.reddit.com/message/compose/?to=${encodeURIComponent(username)}&subject=${encodeURIComponent("Quick question about your post")}&message=${encodeURIComponent(text)}`;
+  const outreachCta = (lead: LeadItem) => {
+    if (lead.platform === "reddit") return "Open Reddit DM";
+    if (lead.platform === "x") return "Reply on X";
+    return "Reply on Hacker News";
   };
 
   return (
     <div className="space-y-4">
+      {pagination.total > 0 && (
+        <div className="flex justify-end">
+          <a
+            href={exportHref}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </a>
+        </div>
+      )}
+
       <AlertDialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
@@ -163,8 +218,8 @@ export default function LeadsTable({
             </h3>
             <p className="text-muted-foreground max-w-sm mx-auto text-sm leading-relaxed mb-6">
               Your AI worker is running silently in the background. Leads will
-              appear here automatically when someone on Reddit creates a new
-              post that matches your positive keywords.
+              appear here automatically when someone on Reddit or Hacker News
+              creates a post that matches your positive keywords.
             </p>
             <Button
               onClick={() => window.location.reload()}
@@ -182,22 +237,29 @@ export default function LeadsTable({
           />
         </Card>
       ) : (
-        leads.map((lead) => (
+        leads.map((lead) => {
+          const meta = platformMeta(lead.platform);
+          return (
           <div
             key={lead.id}
             className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-soft transition-all hover:border-ember/30"
           >
             <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-3 sm:gap-4 mb-4">
               <div className="min-w-0">
-                <span className="text-[10px] font-bold text-ember uppercase tracking-widest mb-1 block">
-                  {lead.campaignName}
-                </span>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span className="text-[10px] font-bold text-ember uppercase tracking-widest">
+                    {lead.campaignName}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${meta.badge}`}>
+                    {meta.label}
+                  </span>
+                </div>
                 <h3 className="text-display text-base sm:text-lg font-semibold text-foreground mb-2 leading-snug">
                   {lead.title}
                 </h3>
                 <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                   <span className="rounded-full bg-surface px-2.5 py-1 text-foreground">
-                    u/{lead.author}
+                    {authorLabel(lead.platform, lead.author)}
                   </span>
                   <span className="rounded-full bg-surface px-2.5 py-1">
                     Match Score:{" "}
@@ -236,45 +298,46 @@ export default function LeadsTable({
                   </button>
                 </div>
                 <a
-                  href={normalizeRedditUrl(lead.url)}
+                  href={normalizeUrl(lead)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  View on Reddit
+                  {meta.viewLabel}
                 </a>
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-surface p-4 mb-6">
+            <div className="rounded-xl border border-border bg-surface p-4 mb-4">
               <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
                 Matched context
               </div>
               <p className="text-sm leading-7 text-foreground whitespace-pre-wrap">
                 {sanitizeContent(lead.content)}
               </p>
+              {lead.aiScoreReason ? (
+                <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground italic">
+                  Why it matched: {lead.aiScoreReason}
+                </p>
+              ) : null}
             </div>
 
             {draft[lead.id] ? (
-              <div className="mb-6 p-4 bg-ember-soft border border-ember/20 rounded-xl space-y-4">
+              <div className="mb-2 p-4 bg-ember-soft border border-ember/20 rounded-xl space-y-4">
                 <p className="text-sm text-foreground leading-relaxed">
                   {draft[lead.id]}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <a
-                    href={buildDmUrl(lead.author, draft[lead.id])}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      markAsContacted(lead.id);
-                      setLeads((prev) =>
-                        prev.map((l) => (l.id === lead.id ? { ...l, status: "contacted" } : l))
-                      );
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSend(lead, draft[lead.id]);
                     }}
                     className="inline-flex items-center justify-center rounded-md bg-ember text-ember-foreground shadow-ember hover:bg-ember/90 h-9 px-4 text-xs font-medium transition-colors"
                   >
-                    Open Reddit DM
+                    {outreachCta(lead)}
                   </a>
                   <Button
                     variant="ghost"
@@ -298,7 +361,8 @@ export default function LeadsTable({
               </Button>
             )}
           </div>
-        ))
+          );
+        })
       )}
 
       {pagination.total > 0 ? (
@@ -336,8 +400,8 @@ export default function LeadsTable({
               </Link>
             ) : (
               <span className="inline-flex h-9 cursor-not-allowed items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-sm font-medium text-muted-foreground opacity-60">
-                Next
                 <ChevronRight className="h-4 w-4" />
+                Next
               </span>
             )}
           </div>

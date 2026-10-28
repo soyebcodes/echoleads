@@ -2,18 +2,32 @@
 
 import { db } from "@/lib/db";
 import { leads, campaigns, voiceSamples } from "@/lib/db/schema";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, and, sql } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { chat, isAiConfigured } from "@/lib/ai/provider";
+import {
+  canGenerateAiReply,
+  getUserPlanId,
+  incrementAiReplyUsage,
+} from "@/lib/billing/limits";
+import { getPlan, PLATFORM_LABELS, type LeadPlatform } from "@/lib/billing/plans";
 
 const LEADS_PAGE_SIZE = 10;
 
-type GroqChatResponse = {
-  choices?: Array<{
-    message?: {
-      content?: string;
-    };
-  }>;
+const leadColumns = {
+  id: leads.id,
+  platform: leads.platform,
+  externalId: leads.externalId,
+  title: leads.title,
+  content: leads.content,
+  url: leads.url,
+  author: leads.author,
+  aiRelevanceScore: leads.aiRelevanceScore,
+  aiScoreReason: leads.aiScoreReason,
+  status: leads.status,
+  createdAt: leads.createdAt,
+  campaignName: campaigns.name,
 };
 
 export async function getLeads() {
@@ -25,17 +39,7 @@ export async function getLeads() {
   if (!user) return [];
 
   return await db
-    .select({
-      id: leads.id,
-      title: leads.title,
-      content: leads.content,
-      url: leads.url,
-      author: leads.author,
-      aiRelevanceScore: leads.aiRelevanceScore,
-      status: leads.status,
-      createdAt: leads.createdAt,
-      campaignName: campaigns.name,
-    })
+    .select(leadColumns)
     .from(leads)
     .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
     .where(eq(campaigns.userId, user.id))
@@ -64,17 +68,7 @@ export async function getPaginatedLeads(page = 1, pageSize = LEADS_PAGE_SIZE) {
   const offset = (currentPage - 1) * pageSize;
 
   const rows = await db
-    .select({
-      id: leads.id,
-      title: leads.title,
-      content: leads.content,
-      url: leads.url,
-      author: leads.author,
-      aiRelevanceScore: leads.aiRelevanceScore,
-      status: leads.status,
-      createdAt: leads.createdAt,
-      campaignName: campaigns.name,
-    })
+    .select(leadColumns)
     .from(leads)
     .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
     .where(eq(campaigns.userId, user.id))
@@ -103,7 +97,7 @@ export async function getPaginatedLeadsByCampaign(
     .select({ count: sql<number>`count(*)::int` })
     .from(leads)
     .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
-    .where(eq(leads.campaignId, campaignId));
+    .where(and(eq(leads.campaignId, campaignId), eq(campaigns.userId, user.id)));
 
   const total = Number(countRow?.count ?? 0);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -111,20 +105,10 @@ export async function getPaginatedLeadsByCampaign(
   const offset = (currentPage - 1) * pageSize;
 
   const rows = await db
-    .select({
-      id: leads.id,
-      title: leads.title,
-      content: leads.content,
-      url: leads.url,
-      author: leads.author,
-      aiRelevanceScore: leads.aiRelevanceScore,
-      status: leads.status,
-      createdAt: leads.createdAt,
-      campaignName: campaigns.name,
-    })
+    .select(leadColumns)
     .from(leads)
     .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
-    .where(eq(leads.campaignId, campaignId))
+    .where(and(eq(leads.campaignId, campaignId), eq(campaigns.userId, user.id)))
     .orderBy(desc(leads.createdAt))
     .limit(pageSize)
     .offset(offset);
@@ -132,6 +116,14 @@ export async function getPaginatedLeadsByCampaign(
   return { leads: rows, total, page: currentPage, pageSize, totalPages };
 }
 
+async function getOwnedLead(leadId: number, userId: string) {
+  const [row] = await db
+    .select({ lead: leads, campaign: campaigns })
+    .from(leads)
+    .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
+    .where(and(eq(leads.id, leadId), eq(campaigns.userId, userId)));
+  return row ?? null;
+}
 
 export async function getCampaignLeadCount(campaignId: string) {
   const supabase = await createClient();
@@ -144,81 +136,127 @@ export async function getCampaignLeadCount(campaignId: string) {
   const [row] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(leads)
-    .where(eq(leads.campaignId, campaignId));
+    .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
+    .where(and(eq(leads.campaignId, campaignId), eq(campaigns.userId, user.id)));
 
   return Number(row?.count ?? 0);
 }
 
+function platformReplyInstructions(platform: string): string {
+  if (platform === "x") {
+    return [
+      "This is a reply to a post on X (Twitter). Write ONE short, casual reply (under 280 characters).",
+      "Sound like a helpful human, not a salesperson. No hashtags, no emoji spam.",
+    ].join(" ");
+  }
+  if (platform === "hacker_news") {
+    return [
+      "This is a reply to a post on Hacker News. Write 1-3 sentences in a technical, understated tone.",
+      "Hacker News readers dislike sales speak — be direct, concrete, and useful.",
+    ].join(" ");
+  }
+  return [
+    "This is a cold Reddit DM response. Write 1-2 paragraphs that sound human, helpful, and mirror the voice samples.",
+  ].join(" ");
+}
+
 export async function generateAIResponse(leadId: number) {
-  const [lead] = await db.select().from(leads).where(eq(leads.id, leadId));
-  const [campaign] = await db
-    .select()
-    .from(campaigns)
-    .where(eq(campaigns.id, lead.campaignId!));
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return "Error: You must be signed in to generate replies.";
+
+  const row = await getOwnedLead(leadId, user.id);
+  if (!row) return "Error: Lead not found.";
+
+  const { lead, campaign } = row;
+  const planId = await getUserPlanId(user.id);
+  const allowed = await canGenerateAiReply(user.id);
+  if (!allowed) {
+    const plan = getPlan(planId);
+    return `You've used all ${plan.aiRepliesPerMonth} AI replies on the ${plan.name} plan this month. Upgrade to keep drafting replies.`;
+  }
+
   const samples = await db
     .select()
     .from(voiceSamples)
     .where(eq(voiceSamples.campaignId, campaign.id));
 
   const prompt = `
-    Draft a cold Reddit DM response for this lead.
-    
+    Draft a response for this lead.
+
     CAMPAIGN: ${campaign.name}
-    CONTEXT: ${campaign.description}
-    VOICE SAMPLES (How I typically write):
+    CONTEXT: ${campaign.description ?? "(no description)"}
+    VOICE SAMPLES (how I typically write):
     ${samples.map((s) => `Post: ${s.samplePostContext}\nMy Reply: ${s.userReply}`).join("\n\n")}
-    
-    LEAD POST TITLE: ${lead.title}
-    LEAD POST CONTENT: ${lead.content}
-    
-    Write a 1-2 paragraph DM that sounds human, helpful, and mirrors my voice samples. 
+
+    LEAD POST (${PLATFORM_LABELS[lead.platform as LeadPlatform] ?? lead.platform}):
+    Author: ${lead.author}
+    Title: ${lead.title}
+    Content: ${lead.content ?? "(no content)"}
+
+    ${platformReplyInstructions(lead.platform)}
     DO NOT use generic sales speak. No placeholders like [Name].
     Return ONLY the message content.
   `;
 
   try {
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-20b",
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.7,
-        }),
-      },
-    );
-
-    const data = (await response.json()) as GroqChatResponse & { error?: any };
-    
-    if (!response.ok || data.error) {
-      console.error("Groq API error:", data.error || data);
-      return `Error generating response: ${data.error?.message || "Unknown error"}`;
+    if (!isAiConfigured()) {
+      return "Error: No AI provider configured. Add OLLAMA_API_KEY or GROQ_API_KEY to the server environment.";
     }
 
-    return (
-      data.choices?.[0]?.message?.content || "Failed to generate AI response."
+    const text = await chat(
+      [
+        {
+          role: "system",
+          content:
+            "You are an expert at writing authentic, high-converting outreach replies that match the user's personal voice. You return only the message content.",
+        },
+        { role: "user", content: prompt },
+      ],
+      { temperature: 0.7, maxTokens: 600 },
     );
-  } catch (err) {
-    console.error("Groq error:", err);
-    return "Error generating response.";
+
+    await incrementAiReplyUsage(user.id);
+    return text;
+  } catch (error) {
+    console.error("AI reply generation failed:", error);
+    return "Error generating response. The AI provider may be temporarily unavailable — please try again.";
   }
 }
 
 export async function markAsContacted(leadId: number) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const row = await getOwnedLead(leadId, user.id);
+  if (!row) return;
+
   await db
     .update(leads)
     .set({ status: "contacted" })
-    .where(eq(leads.id, leadId));
+    .where(and(eq(leads.id, leadId), eq(leads.campaignId, row.campaign.id)));
   revalidatePath("/dashboard/leads");
 }
 
 export async function deleteLead(leadId: number) {
-  await db.delete(leads).where(eq(leads.id, leadId));
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const row = await getOwnedLead(leadId, user.id);
+  if (!row) return;
+
+  await db.delete(leads).where(and(eq(leads.id, leadId), eq(leads.campaignId, row.campaign.id)));
   revalidatePath("/dashboard/leads");
 }
 
@@ -230,11 +268,10 @@ export async function deleteLeadsByCampaign(campaignId: string) {
 
   if (!user) throw new Error("Unauthorized");
 
-  // Verify the campaign belongs to this user before deleting
   const [campaign] = await db
     .select({ id: campaigns.id })
     .from(campaigns)
-    .where(eq(campaigns.id, campaignId));
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.userId, user.id)));
 
   if (!campaign) throw new Error("Campaign not found");
 
@@ -252,16 +289,19 @@ export async function getCampaignScanStatus(campaignId: string) {
   if (!user) return { leadCount: 0, status: "idle" as string | null };
 
   const [campaign] = await db
-    .select({ 
-      lastRunStatus: campaigns.lastRunStatus 
+    .select({
+      lastRunStatus: campaigns.lastRunStatus,
     })
     .from(campaigns)
-    .where(eq(campaigns.id, campaignId));
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.userId, user.id)));
+
+  if (!campaign) return { leadCount: 0, status: "idle" };
 
   const [result] = await db
-    .select({ count: sql<number>`count(*)` })
+    .select({ count: sql<number>`count(*)::int` })
     .from(leads)
-    .where(eq(leads.campaignId, campaignId));
+    .innerJoin(campaigns, eq(leads.campaignId, campaigns.id))
+    .where(and(eq(leads.campaignId, campaignId), eq(campaigns.userId, user.id)));
 
   return {
     leadCount: Number(result?.count) || 0,

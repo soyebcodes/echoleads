@@ -19,7 +19,7 @@ export default function Page() {
         <div className="relative space-y-3">
           <p className="text-display text-xs font-semibold uppercase tracking-[0.2em] text-ember">Trusted by 400+ founders</p>
           <p className="text-display text-2xl font-semibold tracking-tight leading-snug max-w-md">
-            "We closed 3 deals in the first week — leads I never would have found scrolling Reddit myself."
+            &ldquo;We closed 3 deals in the first week — leads I never would have found scrolling Reddit myself.&rdquo;
           </p>
           <p className="text-sm text-muted-foreground">— Priya, indie SaaS founder</p>
         </div>

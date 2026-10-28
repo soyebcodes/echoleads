@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const display = Space_Grotesk({
   variable: "--font-display",
@@ -16,12 +17,12 @@ const body = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "EchoLeads — Reddit lead generation, automated",
+  title: "EchoLeads — AI lead generation from Reddit & Hacker News",
   description:
-    "EchoLeads scans Reddit conversations in real time so you never miss a customer asking for exactly what you sell.",
+    "EchoLeads scans Reddit and Hacker News in real time so you never miss a customer asking for exactly what you sell. X (Twitter) support is coming soon.",
   openGraph: {
-    title: "EchoLeads — Reddit lead generation, automated",
-    description: "Turn Reddit conversations into pipeline, automatically.",
+    title: "EchoLeads — AI lead generation from Reddit & Hacker News",
+    description: "Turn community conversations into pipeline, automatically.",
     type: "website",
   },
   twitter: { card: "summary_large_image" },
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

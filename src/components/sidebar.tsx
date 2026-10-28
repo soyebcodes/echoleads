@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { LayoutDashboard, Radar, Users, Settings, LogOut, Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { LayoutDashboard, Radar, Users, Settings, LogOut, Menu, X, CreditCard } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { Brand } from "@/components/brand";
 
@@ -11,6 +11,7 @@ const NAV = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard, exact: true },
   { label: "Campaigns", href: "/dashboard/campaigns", icon: Radar },
   { label: "Leads", href: "/dashboard/leads", icon: Users },
+  { label: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -18,11 +19,12 @@ export default function Sidebar({ name, avatarUrl }: { name: string; avatarUrl: 
   const pathname = usePathname();
   const initial = name[0]?.toUpperCase() ?? "U";
   const [open, setOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
 
-  // Close the mobile drawer whenever the route changes.
-  useEffect(() => {
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   // Lock body scroll while the mobile drawer is open.
   useEffect(() => {

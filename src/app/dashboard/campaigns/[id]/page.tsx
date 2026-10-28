@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, MessageSquare, Key, Clock, ThumbsUp, MessageCircle, Pencil } from "lucide-react";
+import { PLATFORM_LABELS, type LeadPlatform } from "@/lib/billing/plans";
 
 export default async function CampaignDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,6 +16,7 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
 
   const positiveKeywords = campaign.keywords.filter(k => !k.isNegative);
   const negativeKeywords = campaign.keywords.filter(k => k.isNegative);
+  const platforms = (campaign.platforms ?? ["reddit"]) as LeadPlatform[];
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-6 md:space-y-8">
@@ -32,6 +34,15 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
               <Badge variant="outline" className="text-ember border-ember/30 uppercase bg-ember-soft tracking-widest text-[10px]">
                 {campaign.leadType}
               </Badge>
+              {platforms.map((platform) => (
+                <Badge
+                  key={platform}
+                  variant="outline"
+                  className="border-border bg-surface tracking-widest text-[10px] uppercase text-muted-foreground"
+                >
+                  {PLATFORM_LABELS[platform] ?? platform}
+                </Badge>
+              ))}
             </div>
             <p className="text-muted-foreground mt-1 flex items-center gap-2">
               Created on {new Date(campaign.createdAt!).toLocaleDateString()}
@@ -121,12 +132,12 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
               {campaign.voiceSamples.map((sample, idx) => (
                 <div key={sample.id} className="bg-surface border border-border rounded-lg p-5 space-y-4">
                   <div>
-                     <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1 block">Context {idx + 1}</span>
-                     <p className="text-foreground text-sm">"{sample.samplePostContext}"</p>
+                      <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1 block">Context {idx + 1}</span>
+                      <p className="text-foreground text-sm">&ldquo;{sample.samplePostContext}&rdquo;</p>
                   </div>
                   <div className="pl-4 border-l-2 border-ember">
-                     <span className="text-xs text-ember uppercase font-bold tracking-wider mb-1 block">Your Replay Style</span>
-                     <p className="text-foreground text-sm italic">"{sample.userReply}"</p>
+                      <span className="text-xs text-ember uppercase font-bold tracking-wider mb-1 block">Your Replay Style</span>
+                      <p className="text-foreground text-sm italic">&ldquo;{sample.userReply}&rdquo;</p>
                   </div>
                 </div>
               ))}
@@ -167,7 +178,9 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
                <Target className="w-6 h-6 text-ember" />
             </div>
             <h3 className="text-foreground font-bold mb-2">Campaign is Active</h3>
-            <p className="text-muted-foreground text-sm mb-6">Our system is actively scanning Reddit for these keywords.</p>
+            <p className="text-muted-foreground text-sm mb-6">
+              Our system is actively scanning {platforms.map((p) => PLATFORM_LABELS[p] ?? p).join(", ")} for these keywords.
+            </p>
             <Link href={`/dashboard/campaigns/${id}/leads`}>
                <Button className="w-full bg-ember text-ember-foreground shadow-ember hover:bg-ember/90 font-semibold">View Matches</Button>
             </Link>

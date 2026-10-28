@@ -31,22 +31,33 @@ type CampaignItem = {
   name: string;
   description?: string | null;
   leadType: string;
+  platforms?: string[] | null;
   leadCount?: number | null;
-  timeFilterDays: number;
+  timeFilterDays: number | null;
   lastRunStatus?: string | null;
   lastRunAt?: string | Date | null;
   lastRunError?: string | null;
 };
 
+const PLATFORM_SHORT: Record<string, string> = {
+  reddit: "Reddit",
+  hacker_news: "HN",
+  x: "X",
+};
+
 function friendlyError(error: string | null | undefined): string | null {
   if (!error) return null;
   const lower = error.toLowerCase();
-  if (lower.includes("429") || lower.includes("too many requests"))
+  if (lower.includes("429") || lower.includes("rate-limit"))
     return "Reddit is rate-limiting requests. Please try again in a few minutes.";
   if (lower.includes("timeout") || lower.includes("timed out"))
     return "The scan timed out. Please try again later.";
   if (lower.includes("fetch failed") || lower.includes("connection"))
-    return "Couldn't reach Reddit. Please try again later.";
+    return "Couldn't reach the platform. Please try again later.";
+  if (lower.includes("quota"))
+    return "Monthly lead quota reached. Upgrade your plan on the Billing page to keep scanning.";
+  if (lower.includes("not configured") || lower.includes("skipped"))
+    return error;
   if (lower.includes("could not start"))
     return "Couldn't start the scan. Please try again.";
   return "Scan encountered an error. Please try again later.";
@@ -85,9 +96,6 @@ export default function CampaignsList({
     }
   };
 
-  const staleCheck = (lastRunAt?: string | Date | null) =>
-    lastRunAt ? Date.now() - new Date(lastRunAt).getTime() > 5 * 60 * 1000 : false;
-
   const handleRunNow = async (id: string) => {
     const campaign = campaigns.find((item) => item.id === id);
     setRunningId(id);
@@ -111,14 +119,20 @@ export default function CampaignsList({
     );
 
     try {
-      await runCampaignNow(id);
+      runCampaignNow(id).catch(() => {
+        stopPolling();
+        setScanProgress(0);
+        setFindingMatches(false);
+        setScanModalOpen(false);
+        toast.error("Could not start scan.");
+      });
       const initialLeadCount = campaign?.leadCount ?? 0;
       let attempts = 0;
 
       stopPolling();
       pollTimerRef.current = setInterval(async () => {
         attempts += 1;
-        setScanProgress(Math.min(92, Math.round((attempts / 12) * 100)));
+        setScanProgress(Math.min(92, Math.round((attempts / 15) * 100)));
         setFindingMatches(attempts >= 4);
 
         const statusResult = await getCampaignScanStatus(id);
@@ -148,7 +162,7 @@ export default function CampaignsList({
           return;
         }
 
-        if (attempts >= 12) {
+        if (attempts >= 15) {
           stopPolling();
           setCampaigns((prev) => prev.map((item) => item.id === id ? { ...item, lastRunStatus: "success" } : item));
           setScanProgress(100);
@@ -156,7 +170,7 @@ export default function CampaignsList({
           setScanFoundResults(false);
           setScanComplete(true);
           toast.info(
-            "No new leads were found yet. You can open the inbox manually.",
+            "The scan is still running in the background. Check back in a few minutes.",
           );
         }
       }, 2000);
@@ -197,7 +211,7 @@ export default function CampaignsList({
     }
   };
 
-  const getStatusBadge = (status?: string | null, lastRunAt?: string | Date | null) => {
+  const getStatusBadge = (status?: string | null) => {
     if (!status) {
       return {
         label: "Not run",
@@ -206,18 +220,6 @@ export default function CampaignsList({
     }
 
     if (status === "running") {
-      // Treat as stale if running for more than 5 minutes
-      const isStale = lastRunAt
-        ? Date.now() - new Date(lastRunAt).getTime() > 5 * 60 * 1000
-        : false;
-
-      if (isStale) {
-        return {
-          label: "Stale",
-          className: "bg-muted text-muted-foreground border border-border",
-        };
-      }
-
       return {
         label: "Running",
         className: "bg-amber-500/15 text-amber-300 border border-amber-500/30",
@@ -246,7 +248,7 @@ export default function CampaignsList({
             No campaigns yet
           </h2>
           <p className="text-muted-foreground mb-6">
-            Create your first campaign to start finding leads on Reddit.
+            Create your first campaign to start finding leads across Reddit and Hacker News.
           </p>
           <Link href="/dashboard/campaigns/new">
             <Button
@@ -312,7 +314,7 @@ export default function CampaignsList({
                         ? "Scan complete."
                         : findingMatches
                           ? "Finding matches…"
-                          : "Looking through Reddit for high-intent posts..."}
+                          : "Scanning your selected platforms for high-intent posts..."}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {scanFoundResults
@@ -390,15 +392,23 @@ export default function CampaignsList({
                 <h3 className="text-display text-lg font-semibold group-hover:text-ember transition-colors">
                   {campaign.name}
                 </h3>
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-2 flex items-center flex-wrap gap-2">
                   <span
-                    className={`px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${getStatusBadge(campaign.lastRunStatus, campaign.lastRunAt).className}`}
+                    className={`px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${getStatusBadge(campaign.lastRunStatus).className}`}
                   >
-                    {getStatusBadge(campaign.lastRunStatus, campaign.lastRunAt).label}
+                    {getStatusBadge(campaign.lastRunStatus).label}
                   </span>
                   <span className="px-2 py-1 rounded-md bg-ember-soft text-ember text-[10px] font-bold uppercase tracking-wider">
                     {campaign.leadType}
                   </span>
+                  {(campaign.platforms ?? ["reddit"]).map((platform) => (
+                    <span
+                      key={platform}
+                      className="px-2 py-1 rounded-md border border-border bg-surface text-muted-foreground text-[10px] font-bold uppercase tracking-wider"
+                    >
+                      {PLATFORM_SHORT[platform] ?? platform}
+                    </span>
+                  ))}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -409,14 +419,14 @@ export default function CampaignsList({
                       e.stopPropagation();
                       handleRunNow(campaign.id);
                     }}
-                    disabled={runningId === campaign.id || (campaign.lastRunStatus === "running" && !staleCheck(campaign.lastRunAt))}
+                    disabled={runningId === campaign.id || campaign.lastRunStatus === "running"}
                     className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-ember-soft hover:text-ember disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Run scan now"
                     title={campaign.lastRunStatus === "running" ? "Scan already in progress" : "Run scan now"}
                   >
                     <PlayCircle className="w-4 h-4" />
                   </button>
-                  {runningId === campaign.id || (campaign.lastRunStatus === "running" && !staleCheck(campaign.lastRunAt)) ? (
+                  {runningId === campaign.id || campaign.lastRunStatus === "running" ? (
                     <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-300 border border-amber-500/30">
                       Scan
                     </span>
@@ -471,7 +481,7 @@ export default function CampaignsList({
                 </div>
                 <div className="text-sm text-foreground">
                   {campaign.lastRunStatus
-                    ? `${getStatusBadge(campaign.lastRunStatus, campaign.lastRunAt).label} • ${campaign.lastRunAt ? new Date(campaign.lastRunAt).toLocaleString() : "pending"}`
+                    ? `${getStatusBadge(campaign.lastRunStatus).label} • ${campaign.lastRunAt ? new Date(campaign.lastRunAt).toLocaleString() : "pending"}`
                     : "No scan history yet"}
                   {campaign.lastRunError ? (
                     <div className="mt-1 text-xs text-rose-300">

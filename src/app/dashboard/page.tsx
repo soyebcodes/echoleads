@@ -31,7 +31,7 @@ export default async function DashboardPage() {
         <h1 className="text-display text-2xl sm:text-3xl font-bold tracking-tight">
           Welcome back, {profile?.name || "there"}
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Here's what your Reddit scanner picked up.</p>
+        <p className="text-sm text-muted-foreground mt-1">Here&apos;s what your lead scanner picked up across your platforms.</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -54,7 +54,7 @@ export default async function DashboardPage() {
           </div>
           <h2 className="text-display text-xl font-semibold mb-2">No active campaigns yet</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-            Create your first campaign and EchoLeads will start monitoring Reddit for high-intent leads within minutes.
+            Create your first campaign and EchoLeads will start monitoring Reddit and Hacker News for high-intent leads within minutes.
           </p>
           <Link
             href="/dashboard/campaigns/new"
@@ -80,7 +80,10 @@ export default async function DashboardPage() {
                 <li key={lead.id} className="flex items-start justify-between gap-3 p-4 hover:bg-surface/50 transition-colors">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium line-clamp-2 sm:truncate">{lead.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                      <span className="rounded bg-surface border border-border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                        {lead.platform === "hacker_news" ? "HN" : lead.platform}
+                      </span>
                       From <span className="text-ember">{lead.campaignName}</span>
                     </p>
                   </div>

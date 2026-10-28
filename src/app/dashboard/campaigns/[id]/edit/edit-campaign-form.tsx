@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,7 @@ const campaignSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().optional(),
   leadType: z.enum(["product", "service"]),
+  platforms: z.array(z.string()).min(1, "Select at least one platform"),
   timeFilterDays: z.string().default("7"),
   minLikes: z.string().default("0"),
   minComments: z.string().default("0"),
@@ -38,6 +39,7 @@ type CampaignData = {
   name: string;
   description?: string | null;
   leadType: string;
+  platforms?: string[] | null;
   timeFilterDays?: number | null;
   minLikes?: number | null;
   minComments?: number | null;
@@ -47,11 +49,27 @@ type CampaignData = {
   voiceSamples: Array<{ samplePostContext: string; userReply: string }>;
 };
 
-const STEPS = ["Basics", "Keywords", "Targeting", "Voice"];
-
-export default function EditCampaignForm({ campaign }: { campaign: CampaignData }) {
+export default function EditCampaignForm({
+  campaign,
+  allowedPlatforms,
+  xConfigured,
+}: {
+  campaign: CampaignData;
+  allowedPlatforms: string[];
+  xConfigured: boolean;
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+
+  const PLATFORM_OPTIONS = [
+    { id: "reddit", label: "Reddit" },
+    { id: "hacker_news", label: "Hacker News" },
+    { id: "x", label: "X (Twitter)" },
+  ].map((option) => ({
+    ...option,
+    enabled: allowedPlatforms.includes(option.id),
+    comingSoon: option.id === "x" && !xConfigured,
+  }));
 
   const {
     register,
@@ -66,6 +84,7 @@ export default function EditCampaignForm({ campaign }: { campaign: CampaignData 
       name: campaign.name,
       description: campaign.description ?? "",
       leadType: (campaign.leadType as "product" | "service") ?? "product",
+      platforms: campaign.platforms && campaign.platforms.length > 0 ? campaign.platforms : ["reddit"],
       timeFilterDays: String(campaign.timeFilterDays ?? 7),
       minLikes: String(campaign.minLikes ?? 0),
       minComments: String(campaign.minComments ?? 0),
@@ -202,6 +221,64 @@ export default function EditCampaignForm({ campaign }: { campaign: CampaignData 
             className="w-full border-dashed border-border text-muted-foreground hover:border-ember/50">
             <Plus className="w-4 h-4 mr-2" /> Add Keyword
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card border-border shadow-soft">
+        <CardContent className="pt-8 space-y-6">
+          <div>
+            <h3 className="text-display text-lg font-medium">Platforms</h3>
+            <p className="text-sm text-muted-foreground mt-1">Choose where this campaign scans for leads.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {PLATFORM_OPTIONS.map((option) => {
+              const selected = watch("platforms").includes(option.id);
+              const locked = !option.enabled || option.comingSoon;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  disabled={locked}
+                  onClick={() => {
+                    const current = watch("platforms");
+                    if (selected) {
+                      if (current.length > 1) {
+                        setValue("platforms", current.filter((p: string) => p !== option.id));
+                      }
+                    } else {
+                      setValue("platforms", [...current, option.id]);
+                    }
+                  }}
+                  className={`relative py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all text-left ${
+                    selected
+                      ? "border-ember bg-ember-soft text-foreground"
+                      : locked
+                        ? "border-border bg-surface text-muted-foreground/50 cursor-not-allowed"
+                        : "border-border bg-surface text-muted-foreground hover:border-ember/50"
+                  }`}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    {option.label}
+                    {option.comingSoon ? (
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Soon
+                      </span>
+                    ) : option.id === "x" ? (
+                      <span className="rounded bg-ember/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-ember">
+                        Pro
+                      </span>
+                    ) : null}
+                  </span>
+                  {locked && (
+                    <span className="block text-[11px] font-normal opacity-70 mt-0.5">
+                      {option.comingSoon ? "Coming soon" : "Upgrade to unlock"}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {errors.platforms && <p className="text-red-400 text-xs">{String(errors.platforms.message)}</p>}
         </CardContent>
       </Card>
 

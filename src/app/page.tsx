@@ -1,53 +1,23 @@
 import Link from "next/link";
-import { ArrowRight, Radar, Zap, Target, Sparkles, Check } from "lucide-react";
+import { ArrowRight, Zap, Target, Sparkles, Layers, Check } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { createClient } from "@/lib/supabase/server";
+import { PLANS } from "@/lib/billing/plans";
 
 const FEATURES = [
-  { icon: Radar, title: "Real-time scanning", desc: "Monitor thousands of Reddit conversations across every subreddit that matters to you." },
-  { icon: Target, title: "Intent scoring", desc: "AI ranks each post by buying intent so you focus on the hottest leads first." },
-  { icon: Zap, title: "Instant alerts", desc: "Get notified the second someone asks for what you offer — reply while intent is highest." },
-  { icon: Sparkles, title: "Reply drafts", desc: "One-click AI drafts tuned to your voice, ready to post authentically." },
+  { icon: Layers, title: "Multi-community scanning", desc: "Monitor Reddit and Hacker News — every community where buyers ask for what you sell. X (Twitter) is coming soon." },
+  { icon: Target, title: "AI intent scoring", desc: "Ollama-powered AI ranks each post by buying intent so you focus on the hottest leads first." },
+  { icon: Sparkles, title: "Reply drafts", desc: "One-click AI drafts tuned to your voice — Reddit DMs and Hacker News comments that sound human." },
+  { icon: Zap, title: "Instant pipeline", desc: "Scored leads land in your inbox with match reasons. Reply while intent is highest, then export to CSV." },
 ];
 
 const STEPS = [
-  { n: "01", title: "Describe your product", body: "Paste your site or write a sentence. We generate keywords, subreddits, and intent signals automatically." },
-  { n: "02", title: "We watch Reddit for you", body: "Our scanner runs 24/7, filtering thousands of posts down to the ones that actually look like buyers." },
-  { n: "03", title: "You reply and close", body: "Review scored leads, use the AI draft or write your own, and land customers where they're already asking." },
+  { n: "01", title: "Describe your product", desc: "Write a sentence about what you sell and pick your platforms. Add keywords that signal buying intent." },
+  { n: "02", title: "We watch every community", desc: "Our scanner runs across Reddit and Hacker News, filtering thousands of posts down to the ones that look like buyers." },
+  { n: "03", title: "You reply and close", desc: "Review scored leads, use the AI draft or write your own, and land customers where they're already asking." },
 ];
 
-const PLANS = [
-  {
-    name: "Basic",
-    price: "৳49",
-    period: "/mo",
-    description: "Perfect for solo founders and side projects.",
-    features: ["1 campaign", "200 leads/mo", "Email alerts", "Basic intent scoring"],
-    cta: "Start free trial",
-    popular: false,
-    soon: false,
-  },
-  {
-    name: "Pro",
-    price: "৳99",
-    period: "/mo",
-    description: "For teams that want to scale their Reddit pipeline.",
-    features: ["Unlimited campaigns", "2,000 leads/mo", "Slack & webhook alerts", "Advanced intent scoring", "Team collaboration"],
-    cta: "Start free trial",
-    popular: true,
-    soon: false,
-  },
-  {
-    name: "Enterprise",
-    price: "Coming soon",
-    period: "",
-    description: "Custom workflows, volume, and dedicated support.",
-    features: ["Custom lead volume", "SSO & audit logs", "Dedicated account manager", "API access"],
-    cta: "Join waitlist",
-    popular: false,
-    soon: true,
-  },
-];
+const PLAN_CARDS = [PLANS.free, PLANS.pro, PLANS.business];
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -64,16 +34,16 @@ export default async function LandingPage() {
         <div className="container mx-auto max-w-4xl text-center space-y-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 backdrop-blur px-4 py-1.5 text-xs font-medium text-muted-foreground">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-ember animate-pulse" />
-            Now scanning 12,400+ subreddits in real time
+            Now scanning Reddit &amp; Hacker News in real time
           </div>
 
           <h1 className="text-display text-5xl md:text-7xl font-bold tracking-tighter leading-[1.05]">
-            Turn Reddit chatter into{" "}
+            Turn social chatter into{" "}
             <span className="text-ember">pipeline</span>
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            EchoLeads listens across Reddit for people asking for what you sell — and hands you scored, ready-to-reply leads before your competitors even notice.
+            EchoLeads listens across Reddit and Hacker News for people asking for what you sell — and hands you scored, ready-to-reply leads before your competitors even notice. X/Twitter support is coming soon.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
@@ -91,7 +61,7 @@ export default async function LandingPage() {
             </Link>
           </div>
 
-          <p className="text-xs text-muted-foreground pt-1">Free forever plan • No credit card required</p>
+          <p className="text-xs text-muted-foreground pt-1">Free plan forever • No credit card required</p>
         </div>
       </main>
 
@@ -121,15 +91,15 @@ export default async function LandingPage() {
             <p className="text-display text-xs font-semibold uppercase tracking-[0.2em] text-ember mb-3">How it works</p>
             <h2 className="text-display text-3xl md:text-4xl font-bold tracking-tight">From signup to first lead in under 5 minutes</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {STEPS.map((s) => (
               <div key={s.n} className="rounded-xl border border-border bg-card p-6">
                 <p className="text-display text-3xl font-bold text-ember mb-3">{s.n}</p>
                 <h3 className="text-display text-lg font-semibold mb-2">{s.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{s.body}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
               </div>
             ))}
-          </div>
+            </div>
         </div>
       </section>
 
@@ -138,13 +108,13 @@ export default async function LandingPage() {
           <div className="text-center mb-14">
             <p className="text-display text-xs font-semibold uppercase tracking-[0.2em] text-ember mb-3">Pricing</p>
             <h2 className="text-display text-3xl md:text-4xl font-bold tracking-tight">Simple, transparent pricing</h2>
-            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">Start free for 14 days. No credit card required.</p>
+            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">Start free. Upgrade when your pipeline outgrows the free plan. Cancel any time.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PLANS.map((plan) => (
+            {PLAN_CARDS.map((plan) => (
               <div
-                key={plan.name}
+                key={plan.id}
                 className={`relative flex flex-col rounded-2xl border p-6 shadow-soft transition-transform hover:-translate-y-0.5 ${
                   plan.popular ? "border-ember bg-ember/5" : "border-border bg-card"
                 }`}
@@ -156,8 +126,8 @@ export default async function LandingPage() {
                 )}
                 <h3 className="text-display text-lg font-semibold">{plan.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-display text-4xl font-bold">{plan.price}</span>
-                  {plan.period && <span className="text-sm text-muted-foreground">{plan.period}</span>}
+                  <span className="text-display text-4xl font-bold">${plan.priceMonthly}</span>
+                  <span className="text-sm text-muted-foreground">/mo</span>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
                 <ul className="mt-6 flex-1 space-y-3">
@@ -178,7 +148,7 @@ export default async function LandingPage() {
                       : "border border-border bg-surface text-foreground hover:border-ember hover:text-ember"
                   }`}
                 >
-                  {plan.cta} <ArrowRight className="h-4 w-4" />
+                  {plan.priceMonthly === 0 ? "Get started free" : `Start with ${plan.name}`} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             ))}
@@ -188,7 +158,7 @@ export default async function LandingPage() {
 
       <section className="px-6 py-24 border-t border-border">
         <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="text-display text-3xl md:text-5xl font-bold tracking-tight mb-4">Your next customer is on Reddit right now.</h2>
+          <h2 className="text-display text-3xl md:text-5xl font-bold tracking-tight mb-4">Your next customer is posting about their problem right now.</h2>
           <p className="text-lg text-muted-foreground mb-8">Stop scrolling. Let EchoLeads bring the leads to you.</p>
           <Link
             href="/signup"

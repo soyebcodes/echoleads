@@ -4,10 +4,15 @@ import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
+const subscribe = () => () => {};
+
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+  const mounted = React.useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
 
   const active = mounted ? (theme === "system" ? resolvedTheme : theme) : "dark";
   const isDark = active === "dark";

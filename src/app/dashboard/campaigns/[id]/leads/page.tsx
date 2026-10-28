@@ -50,6 +50,8 @@ export default async function CampaignLeadsPage({ params, searchParams }: Props)
       <LeadsTable
         key={result.page}
         initialLeads={result.leads}
+        campaignId={id}
+        basePath={`/dashboard/campaigns/${id}/leads`}
         pagination={{
           page: result.page,
           pageSize: result.pageSize,

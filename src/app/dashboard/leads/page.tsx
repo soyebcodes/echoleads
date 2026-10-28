@@ -16,7 +16,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
       <div>
         <h1 className="text-display text-2xl sm:text-3xl font-bold tracking-tight mb-2">Leads Inbox</h1>
-        <p className="text-sm text-muted-foreground">High-intent Reddit posts matched to your campaigns.</p>
+        <p className="text-sm text-muted-foreground">High-intent posts from Reddit and Hacker News — matched to your campaigns by AI.</p>
       </div>
 
       <LeadsTable

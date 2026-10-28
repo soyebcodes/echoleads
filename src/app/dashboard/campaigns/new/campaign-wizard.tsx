@@ -25,6 +25,7 @@ const campaignSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().optional(),
   leadType: z.enum(["product", "service"]),
+  platforms: z.array(z.string()).min(1, "Select at least one platform"),
   timeFilterDays: z.string().default("7"),
   minLikes: z.string().default("0"),
   minComments: z.string().default("0"),
@@ -44,10 +45,26 @@ type CampaignFormValues = z.infer<typeof campaignSchema>;
 
 const STEPS = ["Basics", "Keywords", "Targeting", "Voice"];
 
-export default function CampaignWizard() {
+export default function CampaignWizard({
+  allowedPlatforms,
+  xConfigured,
+}: {
+  allowedPlatforms: string[];
+  xConfigured: boolean;
+}) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+
+  const PLATFORM_OPTIONS = [
+    { id: "reddit", label: "Reddit" },
+    { id: "hacker_news", label: "Hacker News" },
+    { id: "x", label: "X (Twitter)" },
+  ].map((option) => ({
+    ...option,
+    enabled: allowedPlatforms.includes(option.id),
+    comingSoon: option.id === "x" && !xConfigured,
+  }));
 
   const [scanModalOpen, setScanModalOpen] = useState(false);
   const [scanCampaignId, setScanCampaignId] = useState<string | null>(null);
@@ -83,6 +100,7 @@ export default function CampaignWizard() {
     resolver: zodResolver(campaignSchema),
     defaultValues: {
       leadType: "product",
+      platforms: ["reddit"],
       keywords: [{ phrase: "", isNegative: false }],
       voiceSamples: [{
         samplePostContext: "",
@@ -120,12 +138,18 @@ export default function CampaignWizard() {
         setIsSubmitting(false);
         
         try {
-          await runCampaignNow(newCampaignId);
+          runCampaignNow(newCampaignId).catch(() => {
+            stopPolling();
+            setScanProgress(0);
+            setFindingMatches(false);
+            setScanComplete(true);
+            toast.error("Could not start scan.");
+          });
           let attempts = 0;
           stopPolling();
           pollTimerRef.current = setInterval(async () => {
             attempts += 1;
-            setScanProgress(Math.min(92, Math.round((attempts / 12) * 100)));
+            setScanProgress(Math.min(92, Math.round((attempts / 15) * 100)));
             setFindingMatches(attempts >= 4);
             const statusResult = await getCampaignScanStatus(newCampaignId);
             
@@ -149,16 +173,16 @@ export default function CampaignWizard() {
               return;
             }
             
-            if (attempts >= 12) {
+            if (attempts >= 15) {
               stopPolling();
               setScanProgress(90);
               setFindingMatches(false);
               setScanFoundResults(false);
               setScanComplete(true);
-              toast.info("No leads found yet. You can open the campaign manually.");
+              toast.info("The scan is still running in the background. Check the campaign in a few minutes.");
             }
           }, 2000);
-        } catch (err) {
+        } catch {
           stopPolling();
           setScanProgress(0);
           setFindingMatches(false);
@@ -168,7 +192,7 @@ export default function CampaignWizard() {
         toast.error(result.error || "Failed to create campaign");
         setIsSubmitting(false);
       }
-    } catch (err) {
+    } catch {
       toast.error("An unexpected error occurred");
       setIsSubmitting(false);
     }
@@ -176,13 +200,13 @@ export default function CampaignWizard() {
 
   const nextStep = async () => {
     const fieldsByStep: (keyof CampaignFormValues)[][] = [
-      ["name", "description", "leadType"],
+      ["name", "description", "leadType", "platforms"],
       ["keywords"],
       ["timeFilterDays", "minLikes", "minComments", "targetDescription", "excludeDescription"],
       ["voiceSamples"]
     ];
     
-    const isValid = await trigger(fieldsByStep[currentStep] as any);
+    const isValid = await trigger(fieldsByStep[currentStep] as Parameters<typeof trigger>[0]);
     if (isValid) {
       setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
     }
@@ -267,7 +291,7 @@ export default function CampaignWizard() {
                         <button
                           key={type}
                           type="button"
-                          onClick={() => setValue("leadType", type as any)}
+                          onClick={() => setValue("leadType", type as "product" | "service")}
                           className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all ${leadType === type
                               ? "border-ember bg-ember-soft text-foreground"
                               : "border-border bg-surface text-muted-foreground hover:border-ember/50"
@@ -277,6 +301,57 @@ export default function CampaignWizard() {
                         </button>
                       ))}
                     </div>
+                  </div>
+                  <div>
+                    <Label className="text-foreground mb-2 block">Where should we scan for leads?</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {PLATFORM_OPTIONS.map((option) => {
+                        const selected = watch("platforms").includes(option.id);
+                        const locked = !option.enabled || option.comingSoon;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            disabled={locked}
+                            onClick={() => {
+                              const current = watch("platforms");
+                              if (selected) {
+                                if (current.length > 1) {
+                                  setValue("platforms", current.filter((p: string) => p !== option.id));
+                                }
+                              } else {
+                                setValue("platforms", [...current, option.id]);
+                              }
+                            }}
+                            className={`relative py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all text-left ${selected
+                                ? "border-ember bg-ember-soft text-foreground"
+                                : locked
+                                  ? "border-border bg-surface text-muted-foreground/50 cursor-not-allowed"
+                                  : "border-border bg-surface text-muted-foreground hover:border-ember/50"
+                              }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              {option.label}
+                              {option.comingSoon ? (
+                                <span className="absolute right-2 top-2 rounded bg-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                                  Soon
+                                </span>
+                              ) : option.id === "x" ? (
+                                <span className="absolute right-2 top-2 rounded bg-ember/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-ember">
+                                  Pro
+                                </span>
+                              ) : null}
+                            </span>
+                            {locked && (
+                              <span className="block text-[11px] font-normal opacity-70 mt-0.5">
+                                {option.comingSoon ? "Coming soon" : "Upgrade to unlock"}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {errors.platforms && <p className="text-red-400 text-xs mt-1">{errors.platforms.message}</p>}
                   </div>
                 </div>
               </div>
@@ -354,7 +429,7 @@ export default function CampaignWizard() {
                 <div className="space-y-6">
                   <div>
                     <Label className="text-foreground block mb-2">Recency Filter</Label>
-                    <p className="text-xs text-muted-foreground mb-3">Only find Reddit posts created within this time window.</p>
+                    <p className="text-xs text-muted-foreground mb-3">Only find posts created within this time window.</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {[
                         { label: "24 Hours", value: "1" },
@@ -546,7 +621,7 @@ export default function CampaignWizard() {
                         ? "Scan complete."
                         : findingMatches
                           ? "Finding matches…"
-                          : "Looking through Reddit for high-intent posts..."}
+                          : "Scanning your selected platforms for high-intent posts..."}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {scanFoundResults

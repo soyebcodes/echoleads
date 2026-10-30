@@ -68,7 +68,7 @@ export async function fetchRedditPosts(
 
       const rawAuthor =
         (entry.author as Record<string, unknown> | undefined)?.name ?? "";
-      const author = String(rawAuthor).replace(/^\/?u\//i, "").trim() || "unknown";
+      const author = String(rawAuthor).replace(/^\/?(?:u\/)?/i, "").trim() || "unknown";
 
       const titleHtml = typeof entry.title === "string" ? entry.title : "";
       const contentHtml = typeof entry.content === "string" ? entry.content : "";

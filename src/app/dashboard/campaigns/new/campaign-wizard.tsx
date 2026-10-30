@@ -22,23 +22,23 @@ import {
 } from "@/components/ui/dialog";
 
 const campaignSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
+  name: z.string().min(3, "Enter a campaign name of at least 3 characters."),
   description: z.string().optional(),
   leadType: z.enum(["product", "service"]),
-  platforms: z.array(z.string()).min(1, "Select at least one platform"),
+  platforms: z.array(z.string()).min(1, "Choose at least one platform."),
   timeFilterDays: z.string().default("7"),
   minLikes: z.string().default("0"),
   minComments: z.string().default("0"),
   targetDescription: z.string().optional(),
   excludeDescription: z.string().optional(),
   keywords: z.array(z.object({
-    phrase: z.string().min(2),
+    phrase: z.string().min(2, "Each keyword needs at least 2 characters."),
     isNegative: z.boolean().default(false),
-  })).min(1, "Add at least one positive keyword"),
+  })).min(1, "Add at least one positive keyword."),
   voiceSamples: z.array(z.object({
-    samplePostContext: z.string().min(10),
-    userReply: z.string().min(10),
-  })).min(1, "Add at least one voice sample"),
+    samplePostContext: z.string().min(10, "Describe the post context in at least 10 characters."),
+    userReply: z.string().min(10, "Write a reply of at least 10 characters."),
+  })).min(1, "Add at least one voice sample."),
 });
 
 type CampaignFormValues = z.infer<typeof campaignSchema>;
@@ -73,6 +73,7 @@ export default function CampaignWizard({
   const [findingMatches, setFindingMatches] = useState(false);
   const [scanFoundResults, setScanFoundResults] = useState(false);
   const [scanComplete, setScanComplete] = useState(false);
+  const [scanNote, setScanNote] = useState<string | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -98,6 +99,7 @@ export default function CampaignWizard({
     formState: { errors },
   } = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignSchema),
+    mode: "onChange",
     defaultValues: {
       leadType: "product",
       platforms: ["reddit"],
@@ -135,6 +137,7 @@ export default function CampaignWizard({
         setFindingMatches(false);
         setScanFoundResults(false);
         setScanComplete(false);
+        setScanNote(null);
         setIsSubmitting(false);
         
         try {
@@ -158,7 +161,8 @@ export default function CampaignWizard({
               setScanProgress(100);
               setFindingMatches(false);
               setScanFoundResults(true);
-              toast.success("Fresh leads are ready.");
+              setScanNote(statusResult.note);
+              toast.success("Fresh leads are ready.", { id: `scan-${newCampaignId}-ready` });
               return;
             }
             
@@ -169,7 +173,12 @@ export default function CampaignWizard({
               setFindingMatches(false);
               setScanFoundResults(false);
               setScanComplete(true);
-              toast.info(statusResult.status === "failed" ? "Scan failed. Please try again later." : "No matching leads found right now.");
+              setScanNote(statusResult.note);
+              if (statusResult.status === "failed") {
+                toast.error("Scan failed. Please try again later.", { id: `scan-${newCampaignId}-failed` });
+              } else {
+                toast.info("No matching leads found right now.", { id: `scan-${newCampaignId}-empty` });
+              }
               return;
             }
             
@@ -179,7 +188,10 @@ export default function CampaignWizard({
               setFindingMatches(false);
               setScanFoundResults(false);
               setScanComplete(true);
-              toast.info("The scan is still running in the background. Check the campaign in a few minutes.");
+              toast.info(
+                "The scan is still running in the background. Check the campaign in a few minutes.",
+                { id: `scan-${newCampaignId}-running` },
+              );
             }
           }, 2000);
         } catch {
@@ -418,7 +430,9 @@ export default function CampaignWizard({
                   >
                     Add Keyword
                   </Button>
-                  {errors.keywords && <p className="text-red-400 text-xs mt-2">{errors.keywords.message}</p>}
+                  {errors.keywords?.root?.message && (
+                    <p className="text-red-400 text-xs mt-2">{errors.keywords.root.message}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -548,7 +562,9 @@ export default function CampaignWizard({
                 >
                   Add Voice Sample
                 </Button>
-                {errors.voiceSamples && <p className="text-red-400 text-xs mt-2">{errors.voiceSamples.message}</p>}
+                {errors.voiceSamples?.root?.message && (
+                  <p className="text-red-400 text-xs mt-2">{errors.voiceSamples.root.message}</p>
+                )}
               </div>
             )}
 
@@ -658,6 +674,12 @@ export default function CampaignWizard({
                 />
               </div>
             </div>
+
+            {scanNote ? (
+              <p className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
+                {scanNote}
+              </p>
+            ) : null}
 
             <div className="flex justify-end gap-3 pt-2">
               <Button

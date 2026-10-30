@@ -48,7 +48,7 @@ export default async function CampaignLeadsPage({ params, searchParams }: Props)
       </div>
 
       <LeadsTable
-        key={result.page}
+        key={`${result.page}-${result.total}`}
         initialLeads={result.leads}
         campaignId={id}
         basePath={`/dashboard/campaigns/${id}/leads`}

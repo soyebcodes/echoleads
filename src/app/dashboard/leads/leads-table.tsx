@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   generateAIResponse,
   markAsContacted,
@@ -69,9 +70,10 @@ function platformMeta(platform: string) {
 }
 
 function authorLabel(platform: string, author: string): string {
-  if (platform === "reddit") return `u/${author}`;
-  if (platform === "x") return `@${author}`;
-  return author;
+  const clean = author.replace(/^\/+/, "").replace(/^u\//i, "").trim();
+  if (platform === "reddit") return `u/${clean}`;
+  if (platform === "x") return `@${clean}`;
+  return clean;
 }
 
 function normalizeUrl(lead: LeadItem): string {
@@ -91,6 +93,7 @@ export default function LeadsTable({
   campaignId?: string;
   basePath?: string;
 }) {
+  const router = useRouter();
   const [leads, setLeads] = useState(initialLeads);
   const [generatingFor, setGeneratingFor] = useState<number | null>(null);
   const [draft, setDraft] = useState<{ [key: number]: string }>({});
@@ -127,6 +130,7 @@ export default function LeadsTable({
     await deleteLead(id);
     setLeads((prev) => prev.filter((l) => l.id !== id));
     setDeletingId(null);
+    router.refresh();
   };
 
   const handleGenerate = async (id: number) => {
@@ -180,7 +184,8 @@ export default function LeadsTable({
           <AlertDialogFooter>
             <AlertDialogCancel className="border-border text-foreground hover:bg-accent">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive-solid hover:opacity-90"
+              style={{ backgroundColor: "var(--destructive)", color: "#fff" }}
               onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
             >
               {deletingId ? "Removing…" : "Remove"}

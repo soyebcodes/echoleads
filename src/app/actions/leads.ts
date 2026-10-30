@@ -242,7 +242,9 @@ export async function markAsContacted(leadId: number) {
     .update(leads)
     .set({ status: "contacted" })
     .where(and(eq(leads.id, leadId), eq(leads.campaignId, row.campaign.id)));
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/leads");
+  revalidatePath(`/dashboard/campaigns/${row.campaign.id}/leads`);
 }
 
 export async function deleteLead(leadId: number) {
@@ -257,7 +259,10 @@ export async function deleteLead(leadId: number) {
   if (!row) return;
 
   await db.delete(leads).where(and(eq(leads.id, leadId), eq(leads.campaignId, row.campaign.id)));
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/leads");
+  revalidatePath(`/dashboard/campaigns/${row.campaign.id}`);
+  revalidatePath(`/dashboard/campaigns/${row.campaign.id}/leads`);
 }
 
 export async function deleteLeadsByCampaign(campaignId: string) {
@@ -276,8 +281,10 @@ export async function deleteLeadsByCampaign(campaignId: string) {
   if (!campaign) throw new Error("Campaign not found");
 
   await db.delete(leads).where(eq(leads.campaignId, campaignId));
-  revalidatePath(`/dashboard/campaigns/${campaignId}/leads`);
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/leads");
+  revalidatePath(`/dashboard/campaigns/${campaignId}`);
+  revalidatePath(`/dashboard/campaigns/${campaignId}/leads`);
 }
 
 export async function getCampaignScanStatus(campaignId: string) {
@@ -286,16 +293,19 @@ export async function getCampaignScanStatus(campaignId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return { leadCount: 0, status: "idle" as string | null };
+  if (!user) {
+    return { leadCount: 0, status: "idle" as string | null, note: null as string | null };
+  }
 
   const [campaign] = await db
     .select({
       lastRunStatus: campaigns.lastRunStatus,
+      lastRunError: campaigns.lastRunError,
     })
     .from(campaigns)
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.userId, user.id)));
 
-  if (!campaign) return { leadCount: 0, status: "idle" };
+  if (!campaign) return { leadCount: 0, status: "idle", note: null };
 
   const [result] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -306,5 +316,6 @@ export async function getCampaignScanStatus(campaignId: string) {
   return {
     leadCount: Number(result?.count) || 0,
     status: campaign?.lastRunStatus || "idle",
+    note: campaign?.lastRunError ?? null,
   };
 }

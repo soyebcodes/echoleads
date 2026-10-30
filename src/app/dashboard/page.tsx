@@ -16,10 +16,11 @@ export default async function DashboardPage() {
   const totalCampaigns = campaigns.length;
   const totalLeads = leads.length;
   const contactedLeads = leads.filter((l) => l.status === "contacted").length;
+  const runningCampaigns = campaigns.filter((c) => c.lastRunStatus === "running").length;
   const conversionRate = totalLeads > 0 ? Math.round((contactedLeads / totalLeads) * 100) : 0;
 
   const stats = [
-    { label: "Active campaigns", value: totalCampaigns, icon: Radar, hint: `${totalCampaigns} running` },
+    { label: "Active campaigns", value: totalCampaigns, icon: Radar, hint: `${runningCampaigns} running` },
     { label: "Total leads", value: totalLeads, icon: Users, hint: `${totalLeads} found` },
     { label: "Contacted", value: contactedLeads, icon: Activity, hint: "engaged with" },
     { label: "Conversion", value: `${conversionRate}%`, icon: TrendingUp, hint: "of leads reached" },

@@ -69,7 +69,9 @@ export default async function BillingPage({ searchParams }: Props) {
               Billing &amp; Usage
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Your plan, quotas, and subscription — billed securely via Stripe.
+              {overview.stripeEnabled
+                ? "Your plan, quotas, and subscription — billed securely via Stripe."
+                : "Your plan and usage. Paid plans are coming soon."}
             </p>
           </div>
         </div>

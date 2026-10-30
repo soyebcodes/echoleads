@@ -79,6 +79,7 @@ export default function CampaignsList({
   const [findingMatches, setFindingMatches] = useState(false);
   const [scanFoundResults, setScanFoundResults] = useState(false);
   const [scanComplete, setScanComplete] = useState(false);
+  const [scanNote, setScanNote] = useState<string | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -105,6 +106,7 @@ export default function CampaignsList({
     setFindingMatches(false);
     setScanFoundResults(false);
     setScanComplete(false);
+    setScanNote(null);
     setCampaigns((prev) =>
       prev.map((item) =>
         item.id === id
@@ -143,7 +145,8 @@ export default function CampaignsList({
           setScanProgress(100);
           setFindingMatches(false);
           setScanFoundResults(true);
-          toast.success("Fresh leads are ready.");
+          setScanNote(statusResult.note);
+          toast.success("Fresh leads are ready.", { id: `scan-${id}-ready` });
           router.refresh();
           return;
         }
@@ -156,7 +159,12 @@ export default function CampaignsList({
           setFindingMatches(false);
           setScanFoundResults(false);
           setScanComplete(true);
-          toast.info(statusResult.status === "failed" ? "Scan failed. Please try again later." : "No new matching leads found right now.");
+          setScanNote(statusResult.note);
+          if (statusResult.status === "failed") {
+            toast.error("Scan failed. Please try again later.", { id: `scan-${id}-failed` });
+          } else {
+            toast.info("No new matching leads found right now.", { id: `scan-${id}-empty` });
+          }
           setRunningId(null);
           router.refresh();
           return;
@@ -171,6 +179,7 @@ export default function CampaignsList({
           setScanComplete(true);
           toast.info(
             "The scan is still running in the background. Check back in a few minutes.",
+            { id: `scan-${id}-running` },
           );
         }
       }, 2000);
@@ -276,7 +285,8 @@ export default function CampaignsList({
           <AlertDialogFooter>
             <AlertDialogCancel className="border-border text-foreground hover:bg-accent">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive-solid hover:opacity-90"
+              style={{ backgroundColor: "var(--destructive)", color: "#fff" }}
               onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
             >
               {deletingId ? "Deleting…" : "Delete"}
@@ -351,6 +361,12 @@ export default function CampaignsList({
                 />
               </div>
             </div>
+
+            {scanNote ? (
+              <p className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
+                {scanNote}
+              </p>
+            ) : null}
 
             <div className="flex justify-end gap-3 pt-2">
               <Button
@@ -484,8 +500,16 @@ export default function CampaignsList({
                     ? `${getStatusBadge(campaign.lastRunStatus).label} • ${campaign.lastRunAt ? new Date(campaign.lastRunAt).toLocaleString() : "pending"}`
                     : "No scan history yet"}
                   {campaign.lastRunError ? (
-                    <div className="mt-1 text-xs text-rose-300">
-                      {friendlyError(campaign.lastRunError)}
+                    <div
+                      className={`mt-1 text-xs ${
+                        campaign.lastRunStatus === "failed"
+                          ? "text-rose-400"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {campaign.lastRunStatus === "failed"
+                        ? friendlyError(campaign.lastRunError)
+                        : campaign.lastRunError}
                     </div>
                   ) : null}
                 </div>

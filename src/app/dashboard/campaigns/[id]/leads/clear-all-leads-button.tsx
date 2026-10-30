@@ -68,7 +68,8 @@ export default function ClearAllLeadsButton({
           <AlertDialogAction
             disabled={isPending}
             onClick={handleClear}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="bg-destructive-solid hover:opacity-90"
+            style={{ backgroundColor: "var(--destructive)", color: "#fff" }}
           >
             {isPending ? "Deleting..." : "Delete All Leads"}
           </AlertDialogAction>

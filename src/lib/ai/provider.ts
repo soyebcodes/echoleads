@@ -24,7 +24,7 @@ function getProviders(): ProviderConfig[] {
       id: "ollama",
       apiKey: process.env.OLLAMA_API_KEY,
       baseUrl: (process.env.OLLAMA_BASE_URL || "https://ollama.com/v1").replace(/\/$/, ""),
-      model: process.env.OLLAMA_MODEL || "gpt-oss:120b",
+      model: process.env.OLLAMA_MODEL || "deepseek-v4.1-flash",
     });
   }
 

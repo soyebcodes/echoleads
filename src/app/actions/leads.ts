@@ -216,7 +216,7 @@ export async function generateAIResponse(leadId: number) {
         },
         { role: "user", content: prompt },
       ],
-      { temperature: 0.7, maxTokens: 600 },
+      { temperature: 0.7, maxTokens: 1500 },
     );
 
     await incrementAiReplyUsage(user.id);

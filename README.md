@@ -87,7 +87,7 @@ Fill in your Supabase credentials and AI keys. Everything else is optional:
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `DATABASE_URL` | ✅ | Supabase auth + database |
 | `OLLAMA_API_KEY` | Recommended | Ollama Cloud AI (primary) — [get a key](https://ollama.com) |
 | `OLLAMA_BASE_URL` | No | Defaults to `https://ollama.com/v1` |
-| `OLLAMA_MODEL` | No | Defaults to `gpt-oss:120b` |
+| `OLLAMA_MODEL` | No | Defaults to `deepseek-v4.1-flash` |
 | `GROQ_API_KEY` | No | Groq fallback if Ollama fails |
 | `GROQ_MODEL` | No | Defaults to `openai/gpt-oss-20b` |
 | `X_BEARER_TOKEN` | No | X API v2 recent search — enables the X platform (paid X tier required) |

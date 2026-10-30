@@ -83,7 +83,7 @@ async function scorePost(
         },
         { role: "user", content: buildScoringPrompt(post, context) },
       ],
-      { temperature: 0.2, maxTokens: 300, timeoutMs: 45_000 },
+      { temperature: 0.2, maxTokens: 700, timeoutMs: 45_000 },
     );
     const score = Math.max(0, Math.min(100, Math.round(Number(result.score) || 0)));
     return { score, reason: String(result.reason ?? "").slice(0, 300) };

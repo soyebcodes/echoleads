@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createCheckoutSession, openBillingPortal } from "@/app/actions/billing";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Check, CreditCard, Loader2 } from "lucide-react";
+import { Check, Clock3, CreditCard, Loader2 } from "lucide-react";
 import type { PlanDefinition } from "@/lib/billing/plans";
 
 type Props = {
@@ -20,7 +20,7 @@ export default function BillingPlans({ plans, currentPlanId, stripeEnabled, isFr
 
   const handleUpgrade = async (planId: string) => {
     if (!stripeEnabled) {
-      toast.error("Billing is not configured on this deployment yet. Set STRIPE_SECRET_KEY.");
+      toast.info("Paid plans are coming soon.");
       return;
     }
     setLoadingPlan(planId);
@@ -56,6 +56,19 @@ export default function BillingPlans({ plans, currentPlanId, stripeEnabled, isFr
 
   return (
     <div className="space-y-4">
+      {!stripeEnabled && (
+        <div className="flex items-start gap-3 rounded-xl border border-ember/20 bg-ember-soft px-5 py-4">
+          <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-ember" />
+          <div className="text-sm">
+            <p className="font-medium text-foreground">Paid plans are coming soon</p>
+            <p className="mt-0.5 text-muted-foreground">
+              You&apos;re on the Free plan for now. Upgrades and billing management will appear here
+              when subscriptions launch.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => {
           const isCurrent = plan.id === currentPlanId;
@@ -107,6 +120,15 @@ export default function BillingPlans({ plans, currentPlanId, stripeEnabled, isFr
                 >
                   {plan.id === "free" ? "Current plan" : "Active"}
                 </Button>
+              ) : plan.id !== "free" && !stripeEnabled ? (
+                <Button
+                  variant="outline"
+                  disabled
+                  className="mt-6 border-border text-muted-foreground"
+                >
+                  <Clock3 className="mr-2 h-4 w-4" />
+                  Coming soon
+                </Button>
               ) : plan.id === "free" ? (
                 <Button
                   variant="outline"
@@ -142,21 +164,25 @@ export default function BillingPlans({ plans, currentPlanId, stripeEnabled, isFr
 
       <div className="flex flex-col items-start justify-between gap-3 rounded-xl border border-border bg-card px-5 py-4 shadow-soft sm:flex-row sm:items-center">
         <div className="text-sm text-muted-foreground">
-          Need to change your payment method or cancel? Use the Stripe customer portal.
+          {stripeEnabled
+            ? "Need to change your payment method or cancel? Use the Stripe customer portal."
+            : "Billing management will be available when paid plans launch."}
         </div>
-        <Button
-          variant="outline"
-          onClick={handlePortal}
-          disabled={portalLoading || !stripeEnabled || isFree}
-          className="border-border text-foreground hover:bg-accent shrink-0"
-        >
-          {portalLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <CreditCard className="mr-2 h-4 w-4" />
-          )}
-          Manage billing
-        </Button>
+        {stripeEnabled ? (
+          <Button
+            variant="outline"
+            onClick={handlePortal}
+            disabled={portalLoading || isFree}
+            className="border-border text-foreground hover:bg-accent shrink-0"
+          >
+            {portalLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <CreditCard className="mr-2 h-4 w-4" />
+            )}
+            Manage billing
+          </Button>
+        ) : null}
       </div>
     </div>
   );

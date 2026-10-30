@@ -17,6 +17,11 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
   const positiveKeywords = campaign.keywords.filter(k => !k.isNegative);
   const negativeKeywords = campaign.keywords.filter(k => k.isNegative);
   const platforms = (campaign.platforms ?? ["reddit"]) as LeadPlatform[];
+  const platformLabels = platforms.map((p) => PLATFORM_LABELS[p] ?? p);
+  const platformList =
+    platformLabels.length <= 1
+      ? platformLabels.join("")
+      : `${platformLabels.slice(0, -1).join(", ")} and ${platformLabels[platformLabels.length - 1]}`;
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-6 md:space-y-8">
@@ -136,7 +141,7 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
                       <p className="text-foreground text-sm">&ldquo;{sample.samplePostContext}&rdquo;</p>
                   </div>
                   <div className="pl-4 border-l-2 border-ember">
-                      <span className="text-xs text-ember uppercase font-bold tracking-wider mb-1 block">Your Replay Style</span>
+                      <span className="text-xs text-ember uppercase font-bold tracking-wider mb-1 block">Your Reply Style</span>
                       <p className="text-foreground text-sm italic">&ldquo;{sample.userReply}&rdquo;</p>
                   </div>
                 </div>
@@ -179,7 +184,7 @@ export default async function CampaignDetailsPage({ params }: { params: Promise<
             </div>
             <h3 className="text-foreground font-bold mb-2">Campaign is Active</h3>
             <p className="text-muted-foreground text-sm mb-6">
-              Our system is actively scanning {platforms.map((p) => PLATFORM_LABELS[p] ?? p).join(", ")} for these keywords.
+              Our system is actively scanning {platformList} for these keywords.
             </p>
             <Link href={`/dashboard/campaigns/${id}/leads`}>
                <Button className="w-full bg-ember text-ember-foreground shadow-ember hover:bg-ember/90 font-semibold">View Matches</Button>

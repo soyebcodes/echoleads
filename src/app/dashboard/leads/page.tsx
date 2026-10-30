@@ -20,7 +20,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       </div>
 
       <LeadsTable
-        key={result.page}
+        key={`${result.page}-${result.total}`}
         initialLeads={result.leads}
         pagination={{
           page: result.page,

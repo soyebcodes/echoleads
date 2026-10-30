@@ -109,6 +109,10 @@
 
 @utility shadow-ember { box-shadow: var(--shadow-ember); }
 @utility shadow-soft { box-shadow: var(--shadow-soft); }
+@utility bg-destructive-solid {
+  background-color: var(--destructive);
+  color: oklch(0.99 0.005 60);
+}
 @utility bg-grid {
   background-image:
     linear-gradient(to right, var(--border) 1px, transparent 1px),

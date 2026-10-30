@@ -189,17 +189,16 @@ export async function runCampaignScan(campaignId: string): Promise<ScanResult> {
   }
 
   const seen = new Set<string>();
-  const candidates = collected
-    .filter((post) => {
-      const key = `${post.platform}:${post.externalId}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      const haystack = normalize(`${post.title} ${post.content ?? ""}`);
-      if (matchesAnyKeyword(haystack, negativeKeywords)) return false;
-      if (!matchesAnyKeyword(haystack, positiveKeywords)) return false;
-      return true;
-    })
-    .slice(0, MAX_CANDIDATES_PER_SCAN);
+  const filteredPosts = collected.filter((post) => {
+    const key = `${post.platform}:${post.externalId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    const haystack = normalize(`${post.title} ${post.content ?? ""}`);
+    if (matchesAnyKeyword(haystack, negativeKeywords)) return false;
+    if (!matchesAnyKeyword(haystack, positiveKeywords)) return false;
+    return true;
+  });
+  const candidates = filteredPosts.slice(0, MAX_CANDIDATES_PER_SCAN);
 
   const scoringContext = {
     campaignName: campaign.name,
@@ -219,10 +218,10 @@ export async function runCampaignScan(campaignId: string): Promise<ScanResult> {
     scored.push(...results);
   }
 
-  const qualified = scored
+  const qualifiedAll = scored
     .filter(({ score }) => score.score >= SCORE_THRESHOLD)
-    .sort((a, b) => b.score.score - a.score.score)
-    .slice(0, quotaRemaining);
+    .sort((a, b) => b.score.score - a.score.score);
+  const qualified = qualifiedAll.slice(0, quotaRemaining);
 
   let inserted = 0;
   if (qualified.length > 0) {
@@ -249,10 +248,13 @@ export async function runCampaignScan(campaignId: string): Promise<ScanResult> {
     inserted = insertedRows.length;
   }
 
-  const notes: string[] = [];
+  const scoringLabel = isAiConfigured() ? "AI scoring" : "keyword fallback";
+  const notes: string[] = [
+    `Scan details — fetched ${collected.length} post(s), ${filteredPosts.length} matched your keyword filters, ${qualifiedAll.length} scored ${SCORE_THRESHOLD}+ (${scoringLabel}), ${inserted} new lead(s) saved.`,
+  ];
   if (skippedPlatforms.length > 0) notes.push(`Skipped — ${skippedPlatforms.join("; ")}`);
   if (platformErrors.length > 0) notes.push(`Platform errors — ${platformErrors.join("; ")}`);
-  if (candidates.length > 0 && qualified.length >= quotaRemaining) {
+  if (qualifiedAll.length > 0 && qualified.length >= quotaRemaining) {
     notes.push(
       `Lead quota reached — ${inserted} new lead(s) saved, remaining candidates discarded. Upgrade to capture more.`,
     );

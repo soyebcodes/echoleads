@@ -22,6 +22,7 @@ const PLAN_CARDS = [PLANS.free, PLANS.pro, PLANS.business];
 export default async function LandingPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const stripeEnabled = Boolean(process.env.STRIPE_SECRET_KEY);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -108,7 +109,11 @@ export default async function LandingPage() {
           <div className="text-center mb-14">
             <p className="text-display text-xs font-semibold uppercase tracking-[0.2em] text-ember mb-3">Pricing</p>
             <h2 className="text-display text-3xl md:text-4xl font-bold tracking-tight">Simple, transparent pricing</h2>
-            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">Start free. Upgrade when your pipeline outgrows the free plan. Cancel any time.</p>
+            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+              {stripeEnabled
+                ? "Start free. Upgrade when your pipeline outgrows the free plan. Cancel any time."
+                : "Start free today. Paid plans are coming soon — no credit card required."}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -140,16 +145,32 @@ export default async function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="/signup"
-                  className={`mt-6 inline-flex h-11 items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-transform hover:-translate-y-0.5 ${
-                    plan.popular
-                      ? "bg-ember text-ember-foreground shadow-ember"
-                      : "border border-border bg-surface text-foreground hover:border-ember hover:text-ember"
-                  }`}
-                >
-                  {plan.priceMonthly === 0 ? "Get started free" : `Start with ${plan.name}`} <ArrowRight className="h-4 w-4" />
-                </Link>
+                {plan.priceMonthly === 0 ? (
+                  <Link
+                    href="/signup"
+                    className="mt-6 inline-flex h-11 items-center justify-center gap-1.5 rounded-lg bg-ember text-sm font-semibold text-ember-foreground shadow-ember transition-transform hover:-translate-y-0.5"
+                  >
+                    Get started free <ArrowRight className="h-4 w-4" />
+                  </Link>
+                ) : stripeEnabled ? (
+                  <Link
+                    href="/signup"
+                    className={`mt-6 inline-flex h-11 items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-transform hover:-translate-y-0.5 ${
+                      plan.popular
+                        ? "bg-ember text-ember-foreground shadow-ember"
+                        : "border border-border bg-surface text-foreground hover:border-ember hover:text-ember"
+                    }`}
+                  >
+                    Start with {plan.name} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    className="mt-6 inline-flex h-11 cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface text-sm font-semibold text-muted-foreground opacity-70"
+                  >
+                    Coming soon
+                  </span>
+                )}
               </div>
             ))}
           </div>

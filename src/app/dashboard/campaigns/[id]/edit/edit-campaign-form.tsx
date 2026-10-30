@@ -14,23 +14,23 @@ import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 
 const campaignSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
+  name: z.string().min(3, "Enter a campaign name of at least 3 characters."),
   description: z.string().optional(),
   leadType: z.enum(["product", "service"]),
-  platforms: z.array(z.string()).min(1, "Select at least one platform"),
+  platforms: z.array(z.string()).min(1, "Choose at least one platform."),
   timeFilterDays: z.string().default("7"),
   minLikes: z.string().default("0"),
   minComments: z.string().default("0"),
   targetDescription: z.string().optional(),
   excludeDescription: z.string().optional(),
   keywords: z.array(z.object({
-    phrase: z.string().min(2),
+    phrase: z.string().min(2, "Each keyword needs at least 2 characters."),
     isNegative: z.boolean().default(false),
-  })).min(1, "Add at least one positive keyword"),
+  })).min(1, "Add at least one positive keyword."),
   voiceSamples: z.array(z.object({
-    samplePostContext: z.string().min(10),
-    userReply: z.string().min(10),
-  })).min(1, "Add at least one voice sample"),
+    samplePostContext: z.string().min(10, "Describe the post context in at least 10 characters."),
+    userReply: z.string().min(10, "Write a reply of at least 10 characters."),
+  })).min(1, "Add at least one voice sample."),
 });
 
 type CampaignFormValues = z.infer<typeof campaignSchema>;
@@ -80,6 +80,7 @@ export default function EditCampaignForm({
     formState: { errors },
   } = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignSchema),
+    mode: "onChange",
     defaultValues: {
       name: campaign.name,
       description: campaign.description ?? "",
@@ -215,7 +216,9 @@ export default function EditCampaignForm({
                 </button>
               </div>
             ))}
-            {errors.keywords && <p className="text-red-400 text-xs">{String(errors.keywords.message)}</p>}
+            {errors.keywords?.root?.message && (
+              <p className="text-red-400 text-xs">{errors.keywords.root.message}</p>
+            )}
           </div>
           <Button type="button" variant="outline" onClick={() => appendKeyword({ phrase: "", isNegative: false })}
             className="w-full border-dashed border-border text-muted-foreground hover:border-ember/50">
